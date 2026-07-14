@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0c1011" />
+    <title>ROOM 7</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="installation" aria-label="ROOM 7 interactive installation">
+      <canvas id="room" class="room" aria-label="A quiet apartment in winter" tabindex="0"></canvas>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+
+      <section id="arrival" class="arrival" aria-labelledby="room-title">
+        <p class="eyebrow">late evening / winter</p>
+        <h1 id="room-title">ROOM 7</h1>
+        <p class="arrival-copy">there is no reason to be here.</p>
+        <button id="enter" class="enter" type="button">enter quietly</button>
+        <p class="arrival-hint">headphones recommended</p>
+      </section>
+
+      <div id="focus" class="focus" aria-hidden="true"><span></span></div>
+      <p id="whisper" class="whisper" role="status" aria-live="polite"></p>
+      <p id="fragment" class="fragment" aria-live="polite"></p>
+
+      <section id="settings" class="settings" aria-label="Settings" aria-hidden="true">
+        <div class="settings-sheet">
+          <p class="eyebrow">room 7</p>
+          <h2>the room is listening</h2>
+          <label class="setting-row">
+            <span>room volume</span>
+            <input id="volume" type="range" min="0" max="100" value="65" />
+          </label>
+          <label class="setting-row toggle-row">
+            <span>subtitles</span>
+            <input id="subtitles" type="checkbox" />
+          </label>
+          <button id="continue" type="button" class="quiet-button">return to room</button>
+          <button id="forget" type="button" class="quiet-button dim">forget this visit</button>
+          <p class="settings-hint">esc to return</p>
+        </div>
+      </section>
+
+      <div id="accessibility" class="sr-only" aria-live="polite"></div>
+    </main>
+    <script type="importmap">
+      { "imports": { "three": "./node_modules/three/build/three.module.js" } }
+    </script>
+    <script type="module" src="./world.js"></script>
+  </body>
+</html>

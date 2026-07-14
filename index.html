@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090a0c" />
+    <meta name="description" content="pgnn — six: квартира, которая помнит больше, чем её посетитель." />
+    <link rel="preload" as="image" href="./assets/pgnn-six/six-wordmark.png" />
+    <link rel="preload" as="image" href="./assets/pgnn-six/panorama-apartment-shoes-desk.png" />
+    <title>pgnn — six</title>
+    <link rel="stylesheet" href="./styles.css?pgnn-six=1" />
+  </head>
+  <body>
+    <main id="room" class="booting" data-view="foyer" data-variant="0" data-chapter="normalno" aria-label="pgnn — six, тихая квартира в синий час">
+      <audio id="record" preload="metadata"></audio>
+
+      <button id="entry-screen" class="entry-screen" type="button" aria-label="проснуться" aria-describedby="entry-state">
+        <img src="./assets/pgnn-six/six-wordmark.png" alt="Шесть" />
+        <span id="entry-state" class="entry-state">комната вспоминает… вы уже были здесь</span>
+      </button>
+      <div id="wake-mask" class="wake-mask" aria-hidden="true">
+        <i class="wake-lid wake-lid-top"></i>
+        <i class="wake-lid wake-lid-bottom"></i>
+      </div>
+      <div id="blink-mask" class="blink-mask" aria-hidden="true">
+        <i class="blink-lid blink-lid-top"></i>
+        <i class="blink-lid blink-lid-bottom"></i>
+      </div>
+      <div id="panorama" aria-hidden="true"></div>
+      <div class="scene-fade" aria-hidden="true"></div>
+      <p id="look-note" class="look-note" aria-hidden="true">оглянитесь</p>
+      <p id="passage-hint" class="passage-hint" aria-live="polite"></p>
+      <canvas id="snow" aria-hidden="true"></canvas>
+      <canvas id="atmosphere" aria-hidden="true"></canvas>
+      <figure id="detail-frame" class="detail-frame" aria-hidden="true">
+        <img alt="" decoding="async" />
+        <button id="detail-portal" class="detail-portal" type="button" aria-label="идти глубже"></button>
+        <div id="detail-actions" class="detail-actions" aria-label="детали места">
+          <button class="detail-touch" type="button"></button>
+          <button class="detail-touch" type="button"></button>
+          <button class="detail-touch" type="button"></button>
+          <button class="detail-touch" type="button"></button>
+        </div>
+        <div id="detail-reaction" class="detail-reaction" aria-hidden="true">
+          <img class="detail-response-plate" alt="" decoding="async" />
+          <i></i><b></b>
+        </div>
+        <section id="rabbit-hole" class="rabbit-hole" aria-hidden="true">
+          <div class="rabbit-tunnel" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <button id="rabbit-threshold" class="rabbit-threshold" type="button" aria-label="ускорить переход"></button>
+        </section>
+        <p id="lyric-evidence" class="lyric-evidence"></p>
+      </figure>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="film-filter" aria-hidden="true"></div>
+      <p id="accessibility" class="sr-only" aria-live="polite">В комнате тихо.</p>
+    </main>
+    <script type="module" src="./room.js?pgnn-six=1"></script>
+  </body>
+</html>

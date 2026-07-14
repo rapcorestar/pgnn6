@@ -1,0 +1,14 @@
+{
+  "name": "room-7-installation-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small browser prototype for ROOM 7.",
+  "scripts": {
+    "dev": "python3 -m http.server 4175",
+    "start": "python3 -m http.server 4175",
+    "build": "node --check world.js"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  }
+}
