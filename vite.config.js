@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/pgnn6/',
   server: {
     host: '0.0.0.0',
     port: 4175,

@@ -8,6 +8,8 @@
 
 The complete album runs invisibly through the installation. There is no player, track list, progress bar, inventory, map, or ending screen.
 
+**[Enter the installation](https://rapcorestar.github.io/pgnn6/)** · **[Listen to the album](https://band.link/pgnn6)**
+
 ## Об альбоме
 
 “Шесть” — концептуальный русскоязычный альбом на стыке alternative rap, spoken word, dark hip-hop и постпанковой поэзии. Альбом построен как анти-библейская история человека после шестого дня творения: от пролога “Свет” до финального “Слова”, где язык окончательно теряет способность спасать.
