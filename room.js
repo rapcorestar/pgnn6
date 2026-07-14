@@ -64,6 +64,8 @@ memory.lastVisit = today;
 const visitSeed = hash(`${today}:${memory.visits}:${memory.loops}`);
 const save = () => localStorage.setItem(SAVE_KEY, JSON.stringify(memory));
 save();
+const analytics = createAnalytics();
+if (memory.visits > 1) analytics.returnVisit();
 
 let currentView = 'foyer';
 let audioStarted = false;
@@ -339,6 +341,146 @@ function hash(value) {
   return total >>> 0;
 }
 
+function createAnalytics() {
+  const pending = [];
+  const sentOnce = new Set();
+  const sessionLocations = new Set();
+  const sessionInteractions = new Set();
+  const milestones = [
+    { event: 'engaged-5m', milliseconds: 5 * 60 * 1000 },
+    { event: 'engaged-10m', milliseconds: 10 * 60 * 1000 },
+    { event: 'engaged-22m', milliseconds: 22 * 60 * 1000 },
+  ];
+  let started = false;
+  let engagedMilliseconds = 0;
+  let activeSince = 0;
+  let engagementTimer = 0;
+
+  const visitBucket = () => memory.visits >= 5 ? '5+' : String(memory.visits);
+  const clean = data => Object.fromEntries(Object.entries(data || {}).filter(([, value]) => value !== undefined && value !== null && value !== ''));
+
+  function deliver(event, data = {}) {
+    const payload = clean(data);
+    if (typeof window.umami?.track === 'function') {
+      try {
+        window.umami.track(event, payload);
+        return;
+      } catch { /* Analytics must never interrupt the installation. */ }
+    }
+    pending.push([event, payload]);
+  }
+
+  function flush() {
+    if (typeof window.umami?.track !== 'function') return;
+    const queued = pending.splice(0);
+    queued.forEach(([event, data]) => {
+      try { window.umami.track(event, data); } catch { /* Ad blockers may remove the endpoint. */ }
+    });
+  }
+
+  function once(key, event, data) {
+    if (sentOnce.has(key)) return;
+    sentOnce.add(key);
+    deliver(event, data);
+  }
+
+  function currentEngagement() {
+    return engagedMilliseconds + (activeSince ? performance.now() - activeSince : 0);
+  }
+
+  function scheduleEngagement() {
+    clearTimeout(engagementTimer);
+    if (!started || document.hidden || !activeSince) return;
+    const next = milestones.find(milestone => !sentOnce.has(milestone.event));
+    if (!next) return;
+    const remaining = Math.max(100, next.milliseconds - currentEngagement());
+    engagementTimer = window.setTimeout(() => {
+      const elapsed = currentEngagement();
+      milestones.filter(milestone => elapsed >= milestone.milliseconds).forEach(milestone => {
+        once(milestone.event, milestone.event, {
+          location: currentView,
+          chapter: room.dataset.chapter,
+          visit: visitBucket(),
+        });
+      });
+      scheduleEngagement();
+    }, remaining);
+  }
+
+  function resumeEngagement() {
+    if (!started || document.hidden || activeSince) return;
+    activeSince = performance.now();
+    scheduleEngagement();
+  }
+
+  function pauseEngagement() {
+    if (activeSince) engagedMilliseconds += performance.now() - activeSince;
+    activeSince = 0;
+    clearTimeout(engagementTimer);
+  }
+
+  const tracker = document.querySelector('#umami-tracker');
+  tracker?.addEventListener('load', flush, { once: true });
+  window.setTimeout(flush, 1600);
+
+  return {
+    returnVisit() {
+      once('return-visit', 'return-visit', {
+        visit: visitBucket(),
+        world_day: currentDay() + 1,
+      });
+    },
+    start() {
+      started = true;
+      once('experience-start', 'experience-start', {
+        returning: memory.visits > 1,
+        visit: visitBucket(),
+        chapter: room.dataset.chapter,
+      });
+      resumeEngagement();
+    },
+    location(view, returnCount = 0) {
+      if (!started || sessionLocations.has(view)) return;
+      sessionLocations.add(view);
+      deliver('location-discovered', {
+        location: view,
+        returning_location: returnCount > 0,
+        world_day: currentDay() + 1,
+      });
+    },
+    interaction(name, location) {
+      if (!started || sessionInteractions.has(name)) return;
+      sessionInteractions.add(name);
+      deliver('meaningful-interaction', {
+        object: name,
+        location,
+        chapter: room.dataset.chapter,
+      });
+    },
+    rabbit(origin, destination, mode, depth) {
+      if (!started) return;
+      deliver('rabbit-hole-entered', {
+        origin,
+        destination,
+        mode,
+        depth: Math.min(6, depth),
+      });
+    },
+    albumCycleComplete(loop) {
+      if (!started) return;
+      deliver('album-cycle-complete', {
+        world_loop: loop >= 5 ? '5+' : String(loop),
+        locations: sessionLocations.size,
+        interactions: sessionInteractions.size,
+      });
+    },
+    visibility(visible) {
+      if (visible) resumeEngagement();
+      else pauseEngagement();
+    },
+  };
+}
+
 function currentVariant() { return (memory.visits - 1 + memory.loops + (memory.evolution || 0)) % 4; }
 function currentDay() { return (memory.visits - 1 + memory.loops + (memory.evolution || 0)) % 3; }
 function memoryGroupForAction(actionName) {
@@ -383,6 +525,7 @@ function registerLocation(view) {
   panoramaRoot.dataset.returnCount = String(returnCount);
   room.dataset.returnCount = String(returnCount);
   room.dataset.returnStage = String(Math.min(4, returnCount));
+  if (room.classList.contains('entered')) analytics.location(view, returnCount);
   save();
 }
 
@@ -416,6 +559,8 @@ function enterRoom() {
   startSound();
   room.classList.remove('booting');
   room.classList.add('entered', 'awakening');
+  analytics.start();
+  analytics.location('foyer', Math.max(0, (memory.locationReturns.foyer || 1) - 1));
   entryScreen?.setAttribute('aria-hidden', 'true');
   status.textContent = 'Вы открываете глаза. Комната уже здесь.';
   window.setTimeout(() => room.classList.remove('awakening'), 3900);
@@ -557,6 +702,7 @@ function performDetailTouch(index) {
   const count = (memory.detailTouches[touch.id] || 0) + 1;
   memory.detailTouches[touch.id] = count;
   memory.actions[touch.action] = (memory.actions[touch.action] || 0) + 1;
+  analytics.interaction(touch.action, currentDetailScene || currentView);
   const totalTouches = Object.values(memory.detailTouches).reduce((sum, value) => sum + Number(value || 0), 0);
   const nextEvolution = Math.min(8, Math.floor(totalTouches / 6));
   const evolved = nextEvolution > (memory.evolution || 0);
@@ -689,6 +835,7 @@ function deepenRabbitHole() {
   let destinationIndex = (depth - 1 + memory.visits + memory.loops) % destinations.length;
   if (destinations[destinationIndex] === currentView) destinationIndex = (destinationIndex + 1) % destinations.length;
   const destination = destinations[destinationIndex];
+  analytics.rabbit(currentView, destination, mode, depth);
   rabbitCommitted = true;
   rabbitHole.dataset.destination = destination;
   status.textContent = 'Экран становится глубже комнаты.';
@@ -860,6 +1007,7 @@ function returnToRoom(from) {
 
 function action(name) {
   memory.actions[name] = (memory.actions[name] || 0) + 1;
+  analytics.interaction(name, currentView);
   panorama.react(memoryGroupForAction(name));
   save();
   showDetail(name);
@@ -980,8 +1128,10 @@ document.addEventListener('keydown', event => {
 });
 document.addEventListener('visibilitychange', () => {
   album.persist();
+  analytics.visibility(!document.hidden);
   if (!document.hidden && room.classList.contains('entered')) queueBlink(1900 + Math.random() * 2200);
 });
+addEventListener('pagehide', () => analytics.visibility(false));
 addEventListener('resize', () => panorama.resize());
 
 let lookAnimation = 0;
@@ -1120,6 +1270,7 @@ function createAlbum(element) {
       // The album is a day, not an ending. Completing all six compositions
       // advances the apartment and lets the next cycle surface quietly.
       memory.loops += 1;
+      analytics.albumCycleComplete(memory.loops);
       memory.albumFinished = false;
       room.classList.add('remembers');
       room.dataset.variant = String(currentVariant());

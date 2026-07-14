@@ -77,7 +77,7 @@ The active installation deliberately uses one lightweight WebGL sphere and two c
 
 ## Persistent world
 
-State is stored locally in the browser; there are no accounts or analytics. Returning visitors retain their album position and leave accumulating physical pressure on the world:
+State is stored locally in the browser; there are no visitor accounts. Returning visitors retain their album position and leave accumulating physical pressure on the world:
 
 - furniture and evidence shift;
 - frost, snow, dust, patina, and colour grading evolve;
@@ -86,6 +86,12 @@ State is stored locally in the browser; there are no accounts or analytics. Retu
 - completing the album advances the world and begins another cycle.
 
 The current save key preserves migration from the earlier `ROOM_7` builds, so existing local memories are not discarded by the project rename.
+
+## Analytics
+
+The public installation uses Umami Cloud's cookie-free tracker, respects the browser's Do Not Track setting, and collects Core Web Vitals. Measurement is intentionally limited to pageviews and meaningful experience milestones: waking the observer, active-time thresholds, first location discoveries, meaningful object interactions, rabbit-hole entries, return visits, completed album cycles, and the outbound album link.
+
+Camera movement, pointer position, lyrics, audio samples, personal identifiers, session replays, and heatmaps are not collected.
 
 ## Creative constraints
 
