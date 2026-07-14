@@ -8,6 +8,14 @@
 
 The complete album runs invisibly through the installation. There is no player, track list, progress bar, inventory, map, or ending screen.
 
+## Об альбоме
+
+“Шесть” — концептуальный русскоязычный альбом на стыке alternative rap, spoken word, dark hip-hop и постпанковой поэзии. Альбом построен как анти-библейская история человека после шестого дня творения: от пролога “Свет” до финального “Слова”, где язык окончательно теряет способность спасать.
+
+> Шесть дней, чтобы создать человека. Шесть треков, чтобы его разобрать.
+
+**Подходит для плейлистов:** alternative rap, Russian rap, sad rap, spoken word, poetic rap, dark hip-hop, indie/urban.
+
 ## Experience
 
 - Twelve connected panoramic locations: apartment, kitchen, bathroom, stairwell, courtyard, lobby, basement, corridor, elevator, attic, roof, and tram stop.
@@ -60,7 +68,7 @@ The deployable static build is written to `dist/`. Vite uses relative asset path
 | `room.js` | State, audio, persistence, interactions, lyrics, routes, particles, and world events. |
 | `panorama.js` | Three.js panorama renderer, camera movement, hotspots, shaders, music response, and memory response. |
 | `styles.css` | Cinematic presentation, close-up reactions, transitions, typography, cursor system, and film treatment. |
-| `public/assets/pgnn-six/` | Current panoramic plates, matched details, wordmark, and six mastered tracks. |
+| `public/assets/pgnn-six/` | Current panoramic plates, matched details, wordmark, favicon, and six mastered tracks. |
 | `old/` | Preserved pre-rebuild prototype and its source assets. |
 
 The active installation deliberately uses one lightweight WebGL sphere and two canvas atmosphere layers rather than a large real-time 3D scene. Frame rate and responsiveness take priority over geometric realism.
