@@ -26,7 +26,8 @@ The complete album runs invisibly through the installation. There is no player, 
 - Browser persistence for visits, location returns, object touches, album position, environmental decay, and spatial mutations.
 - Live music analysis driving practical light, CRT glow, exposure, dust, snow, weather, and song-specific grading.
 - A continuous 21:44 album cycle that advances the apartment into another “day” instead of stopping.
-- Russian interface whispers and lyrics, using the single navigation colour `#F7BB00`.
+- A persistent Russian, English, and French language layer for interface whispers, navigation, metadata, accessibility, and track-synchronised lyric fragments.
+- Russian remains the default language; the album title and in-world signage stay in their original language. Navigation uses the single colour `#F7BB00`.
 - Cinematic camera travel, restrained motion blur, chromatic aberration, handheld drift, natural blinking, film grain, and asynchronous building events.
 
 Read [the creative manifesto](./MANIFESTO.md) before changing the experience. The relationship between the six compositions and the world is documented in [the album-space map](./ALBUM_ARCHITECTURE.md).
@@ -57,7 +58,7 @@ The deployable static build is written to `dist/`. Vite uses relative asset path
 
 - Drag to look around the full 360° environment.
 - Scroll to adjust the field of view.
-- Passages reveal a small Russian destination whisper only when noticed.
+- Passages reveal a small destination whisper in the selected language only when noticed.
 - Objects never announce themselves. Touching one may open a matched close-up, alter the sound mix, change the current room, or create a consequence visible on a later visit.
 - Close-up objects can be touched directly; selected thresholds lead deeper into the building.
 - `Escape` leaves a close-up or returns toward the apartment.
@@ -67,7 +68,8 @@ The deployable static build is written to `dist/`. Vite uses relative asset path
 | Path | Purpose |
 | --- | --- |
 | `index.html` | Minimal installation shell, title screen, overlays, and accessibility regions. |
-| `room.js` | State, audio, persistence, interactions, lyrics, routes, particles, and world events. |
+| `room.js` | State, audio, persistence, interactions, routes, particles, and world events. |
+| `i18n.js` | Russian, English, and French interface copy, interaction labels, metadata, and lyric translations. |
 | `panorama.js` | Three.js panorama renderer, camera movement, hotspots, shaders, music response, and memory response. |
 | `styles.css` | Cinematic presentation, close-up reactions, transitions, typography, cursor system, and film treatment. |
 | `public/assets/pgnn-six/` | Current panoramic plates, matched details, wordmark, favicon, and six mastered tracks. |

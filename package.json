@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "check": "node --check room.js && node --check panorama.js",
+    "check": "node --check room.js && node --check panorama.js && node --check i18n.js",
     "build": "npm run check && vite build",
     "preview": "vite preview"
   },

@@ -1,4 +1,12 @@
 import { createPanorama } from './panorama.js?pgnn-six=1';
+import {
+  DEFAULT_LANGUAGE,
+  DETAIL_LABELS,
+  LYRIC_EVIDENCE,
+  SCENE_LYRIC_EVIDENCE,
+  UI_TRANSLATIONS,
+  normalizeLanguage,
+} from './i18n.js?pgnn-six=1';
 
 const room = document.querySelector('#room');
 const views = [...document.querySelectorAll('.view')];
@@ -19,8 +27,16 @@ const rabbitThreshold = document.querySelector('#rabbit-threshold');
 const detailTouchButtons = [...document.querySelectorAll('.detail-touch')];
 const detailReaction = document.querySelector('#detail-reaction');
 const detailResponsePlate = document.querySelector('.detail-response-plate');
+const entryDeviceNote = document.querySelector('#entry-device-note');
+const albumLink = document.querySelector('.album-link');
+const lookNote = document.querySelector('#look-note');
+const detailActions = document.querySelector('#detail-actions');
+const languageSwitcher = document.querySelector('#language-switcher');
+const languageButtons = [...document.querySelectorAll('[data-language]')];
+const structuredData = document.querySelector('#album-structured-data');
 
 const SAVE_KEY = 'pgnn-six-memory-v1';
+const LANGUAGE_KEY = 'pgnn-six-language';
 const LEGACY_SAVE_KEYS = ['room-7-memory-v5', 'room-7-memory-v4'];
 const today = new Date().toISOString().slice(0, 10);
 const ALBUM = [
@@ -89,8 +105,106 @@ let activeLyricTrack = '';
 let activeLyricSegment = -1;
 let activeLyricIndex = -1;
 let dwellTarget = null;
+let statusState = { key: 'quiet', touchId: '' };
+let currentLanguage = resolveLanguage();
 const musicState = { low: 0, mid: 0, high: 0, energy: 0, progress: 0, chapter: 0, active: false };
 let lastMusicResponse = 0;
+
+function resolveLanguage() {
+  const requested = new URLSearchParams(window.location.search).get('lang');
+  if (requested) return normalizeLanguage(requested);
+  try { return normalizeLanguage(localStorage.getItem(LANGUAGE_KEY) || DEFAULT_LANGUAGE); }
+  catch { return DEFAULT_LANGUAGE; }
+}
+
+function ui() {
+  return UI_TRANSLATIONS[currentLanguage] || UI_TRANSLATIONS[DEFAULT_LANGUAGE];
+}
+
+function translatedDetailLabel(touchOrId) {
+  const touchId = typeof touchOrId === 'string' ? touchOrId : touchOrId?.id;
+  const fallback = typeof touchOrId === 'string' ? '' : touchOrId?.label || '';
+  return DETAIL_LABELS[currentLanguage]?.[touchId] || DETAIL_LABELS[DEFAULT_LANGUAGE]?.[touchId] || fallback;
+}
+
+function setStatus(key = 'quiet', touchId = '') {
+  statusState = { key, touchId };
+  if (!status) return;
+  if (touchId) {
+    const label = translatedDetailLabel(touchId);
+    status.textContent = label
+      ? `${label.replace(/^./u, letter => letter.toLocaleUpperCase(currentLanguage))}${/[.!?…]$/u.test(label) ? '' : '.'}`
+      : ui().quiet;
+    return;
+  }
+  status.textContent = ui()[key] || ui().quiet;
+}
+
+function refreshDetailTouchLabels() {
+  const sceneTouches = DETAIL_TOUCHES[currentDetailScene] || [];
+  detailTouchButtons.forEach((button, index) => {
+    const touch = sceneTouches[index];
+    if (touch) button.setAttribute('aria-label', translatedDetailLabel(touch));
+  });
+}
+
+function replaceDeviceNote(lines) {
+  if (!entryDeviceNote) return;
+  entryDeviceNote.replaceChildren(document.createTextNode(lines[0]), document.createElement('br'), document.createTextNode(lines[1]));
+}
+
+function setMetaContent(selector, content) {
+  document.querySelector(selector)?.setAttribute('content', content);
+}
+
+function applyLanguage(language, { persist = true, updateUrl = true } = {}) {
+  currentLanguage = normalizeLanguage(language);
+  const copy = ui();
+  document.documentElement.lang = currentLanguage;
+  room.dataset.language = currentLanguage;
+  if (persist) {
+    try { localStorage.setItem(LANGUAGE_KEY, currentLanguage); } catch { /* persistence is optional */ }
+  }
+  if (updateUrl) {
+    const url = new URL(window.location.href);
+    if (currentLanguage === DEFAULT_LANGUAGE) url.searchParams.delete('lang');
+    else url.searchParams.set('lang', currentLanguage);
+    history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+  languageSwitcher?.setAttribute('aria-label', copy.language);
+  languageButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.language === currentLanguage)));
+  room.setAttribute('aria-label', copy.roomAria);
+  entryScreen?.setAttribute('aria-label', copy.wake);
+  if (entryState) entryState.textContent = room.classList.contains('entry-ready') ? copy.wake : copy.remembering;
+  replaceDeviceNote(copy.deviceNote);
+  if (albumLink) {
+    albumLink.textContent = copy.albumLink;
+    albumLink.setAttribute('aria-label', copy.albumLinkAria);
+  }
+  if (lookNote) lookNote.textContent = copy.lookAround;
+  detailPortal?.setAttribute('aria-label', copy.detailPortal);
+  detailActions?.setAttribute('aria-label', copy.detailActions);
+  rabbitThreshold?.setAttribute('aria-label', copy.rabbitThreshold);
+  setMetaContent('meta[name="description"]', copy.metaDescription);
+  setMetaContent('meta[property="og:description"]', copy.metaTagline);
+  setMetaContent('meta[name="twitter:description"]', copy.metaTagline);
+  setMetaContent('meta[property="og:locale"]', copy.locale);
+  if (structuredData) {
+    try {
+      const data = JSON.parse(structuredData.textContent);
+      data.description = copy.aboutAlbum;
+      data.abstract = copy.metaTagline;
+      structuredData.textContent = JSON.stringify(data);
+    } catch { /* keep the server-rendered Russian metadata */ }
+  }
+  refreshDetailTouchLabels();
+  setStatus(statusState.key, statusState.touchId);
+  if (passageHint) {
+    passageHint.textContent = '';
+    passageHint.classList.remove('visible');
+  }
+  if (detailFrame?.classList.contains('active')) syncLyricEvidence();
+}
 
 const DETAIL_SCENES = {
   desk: { src: './assets/pgnn-six/detail-desk-matched.png' },
@@ -258,64 +372,6 @@ const ACTION_TRACK = {
   'market-sign': 'knockout', 'market-door': 'knockout', 'market-trolley': 'knockout', 'market-cart': 'knockout', 'market-receipt': 'knockout', 'market-window': 'knockout',
   'market-water': 'knockout', 'market-checkout-receipt': 'knockout', 'market-scanner': 'knockout', 'market-basket': 'knockout', 'market-mirror': 'knockout', 'market-freezer': 'knockout', 'market-cigarettes': 'knockout', 'market-backroom': 'knockout', 'market-fluorescent': 'knockout',
 };
-const LYRIC_EVIDENCE = {
-  normalno: [
-    'Я скучаю по версиям себя, что фейсконтроль не прошли.',
-    'У нас синхронная тоска, как в облаке iCloud',
-    'В его шкафу — одежда. В моём — души ископаемые.',
-    'Мой айфон знает обо мне больше, чем я.',
-    'Я романтик, как Фитцджеральд в «По эту сторону рая»',
-    'Но тишина после — честная. Тишина после — как дом.',
-  ],
-  rejumper: [
-    'Мой прыжок — лишь рябь на полотне.',
-    'Может там за полем то же поле, но шире?',
-    'Может наш прыжок только помеха в эфире?',
-    'Мы летим в соседний луг, там трава зеленее. Просто меняем позицию, веря в святую материю.',
-    'Кто-то прыгнул высоко — их склевал случай.',
-    'Можно просидеть в траве… да пошло оно всё нахуй.',
-  ],
-  casting: [
-    'Мы провалили кастинг на роль счастливых людей.',
-    'Я выхожу на карниз, чтобы поправить антенну, но падаю вниз, ломая четвёртую стену.',
-    'Я — то самое смутное, липкое подозрение, что мир — это просто ошибка создателя.',
-    'Я вижу себя по частям, разбитый — всё просто отлично.',
-    'Я допиваю чай и сливаюсь с безликим пейзажем за морозным окном.',
-    'Добро пожаловать в шоу, где горе не от ума.',
-  ],
-  water: [
-    'Моё тело — простой футляр для боли и плесени.',
-    'Выбрасываю часы, будто мелочь в фонтан, пытаясь услышать дно, но там совсем пусто.',
-    'Интернет торгует всем, кроме покоя.',
-    'Я записываю тишину между строк.',
-    'Жизнь — лишь кости в миске, что челюсть собаки времени перемалывает.',
-    'Я — тот лошок, влюблённый в память, которая не знает его имени.',
-  ],
-  knockout: [
-    'Противник — это зеркало в лифте.',
-    'Я знаю — асфальт бывает жестким для всех.',
-    'Этот город — один большой Стоктон.',
-    'Оказался мешком для битья, на котором ты отрабатывала свои комплексы.',
-    'Я пересматриваю хайлайты наших ссор, чувствуя себя старателем.',
-    'Герои не падают — они просто берут паузу, чтобы вытереть кровь.',
-  ],
-  slovo: [
-    'Мир — это слово безумного пастыря.',
-    'Косноязычие стало правильной тактикой.',
-    'Тонем в собственном шёпоте, заживо сгнив в своём страхе.',
-    'Смыслы изъедены ржавчиной веры.',
-    'Здесь ничего нету, кроме зимы.',
-    'Слово — калека, тупое орудие.',
-  ],
-};
-const SCENE_LYRIC_EVIDENCE = {
-  'supermarket-front': {
-    knockout: ['Я захожу в «Дикси» за водой, как в раздевалку после проигранного боя.'],
-  },
-  'supermarket-inside': {
-    knockout: ['Я ищу в карманах не монеты, а доказательства того, что я был тут.'],
-  },
-};
 const sound = createSoundscape();
 const album = createAlbum(recordElement);
 panoramaRoot.dataset.loop = String(memory.loops);
@@ -337,20 +393,14 @@ const panorama = createPanorama(panoramaRoot, portal => {
     passageHint.classList.remove('visible');
     return;
   }
-  const names = {
-    foyer: 'в комнату', kitchen: 'на кухню', bathroom: 'в ванную', stairwell: 'на лестницу',
-    courtyard: 'во двор', lobby: 'в подъезд', basement: 'в подвал', corridor: 'в коридор', elevator: 'в лифт',
-    attic: 'на чердак', roof: 'на крышу', tramstop: 'к остановке',
-    'supermarket-front': 'к магазину', 'supermarket-inside': 'в магазин',
-  };
   if (event) {
     passageHint.style.setProperty('--hint-x', `${event.clientX}px`);
     passageHint.style.setProperty('--hint-y', `${event.clientY}px`);
   }
   const passageName = currentView === 'supermarket-inside' && hotspot.to === 'supermarket-front'
-    ? 'наружу'
-    : names[hotspot.to] || 'пройти';
-  passageHint.textContent = hotspot.loop ? 'дальше' : passageName;
+    ? ui().outside
+    : ui().passages[hotspot.to] || ui().pass;
+  passageHint.textContent = hotspot.loop ? ui().further : passageName;
   passageHint.classList.add('visible');
 });
 
@@ -363,6 +413,12 @@ room.classList.add('pano-active');
 syncPersistentWorld();
 registerLocation('foyer');
 panorama.setActive(true, 'foyer');
+languageButtons.forEach(button => button.addEventListener('click', event => {
+  event.stopPropagation();
+  applyLanguage(button.dataset.language);
+}));
+window.addEventListener('popstate', () => applyLanguage(resolveLanguage(), { persist: true, updateUrl: false }));
+applyLanguage(currentLanguage, { persist: false, updateUrl: false });
 if (memory.visits > 1 || memory.loops > 0) window.setTimeout(() => room.classList.add('remembers'), 1500);
 prepareEntry();
 requestAnimationFrame(renderMusicResponse);
@@ -585,7 +641,7 @@ async function prepareEntry() {
     preloadImage('./assets/pgnn-six/panorama-tramstop.png'),
   ]);
   room.classList.add('entry-ready');
-  if (entryState) entryState.textContent = 'проснуться';
+  if (entryState) entryState.textContent = ui().wake;
 }
 
 function enterRoom() {
@@ -596,7 +652,7 @@ function enterRoom() {
   analytics.start();
   analytics.location('foyer', Math.max(0, (memory.locationReturns.foyer || 1) - 1));
   entryScreen?.setAttribute('aria-hidden', 'true');
-  status.textContent = 'Вы открываете глаза. Комната уже здесь.';
+  setStatus('wakeStatus');
   window.setTimeout(() => room.classList.remove('awakening'), 3900);
   queueBlink(4700 + Math.random() * 1800);
   scheduleWorldEvent('foyer', 6200);
@@ -723,7 +779,7 @@ function configureDetailTouches(sceneKey) {
     button.hidden = !touch;
     if (!touch) return;
     button.dataset.touchIndex = String(index);
-    button.setAttribute('aria-label', touch.label);
+    button.setAttribute('aria-label', translatedDetailLabel(touch));
     button.style.setProperty('--touch-x', `${touch.x}%`);
     button.style.setProperty('--touch-y', `${touch.y}%`);
     button.style.setProperty('--touch-w', `${touch.w}%`);
@@ -775,7 +831,7 @@ function performDetailTouch(index) {
   else sound.touch();
   album.evidence(touch.action);
   room.dataset.objectEcho = touch.effect;
-  status.textContent = touch.label.replace(/^./, letter => letter.toUpperCase()) + '.';
+  setStatus('quiet', touch.id);
   if (evolved) {
     room.classList.add('remembers');
     room.dataset.variant = String(currentVariant());
@@ -850,7 +906,7 @@ function deepenRabbitHole() {
       detailFrame.classList.add('rabbit-diving');
     });
     sound.panel();
-    status.textContent = 'Пространство проваливается быстрее.';
+    setStatus('rabbitFaster');
     completeRabbitDescent(rabbitHole.dataset.destination, 220);
     return;
   }
@@ -876,7 +932,7 @@ function deepenRabbitHole() {
   analytics.rabbit(currentView, destination, mode, depth);
   rabbitCommitted = true;
   rabbitHole.dataset.destination = destination;
-  status.textContent = 'Экран становится глубже комнаты.';
+  setStatus('screenDeeper');
   completeRabbitDescent(destination, 2380);
 }
 
@@ -930,8 +986,10 @@ rabbitThreshold?.addEventListener('click', event => {
 function syncLyricEvidence(forceNew = false) {
   if (!lyricEvidence || !detailFrame) return;
   const track = ALBUM.find(item => item.id === room.dataset.chapter);
-  const sceneFragments = track ? SCENE_LYRIC_EVIDENCE[currentDetailScene]?.[track.id] : null;
-  const fragments = sceneFragments?.length ? sceneFragments : track ? LYRIC_EVIDENCE[track.id] || [] : [];
+  const languageLyrics = LYRIC_EVIDENCE[currentLanguage] || LYRIC_EVIDENCE[DEFAULT_LANGUAGE];
+  const languageSceneLyrics = SCENE_LYRIC_EVIDENCE[currentLanguage] || SCENE_LYRIC_EVIDENCE[DEFAULT_LANGUAGE];
+  const sceneFragments = track ? languageSceneLyrics[currentDetailScene]?.[track.id] : null;
+  const fragments = sceneFragments?.length ? sceneFragments : track ? languageLyrics[track.id] || [] : [];
   if (!track || !fragments.length) {
     lyricEvidence.textContent = '';
     detailFrame.removeAttribute('data-track');
@@ -1021,7 +1079,7 @@ function moveTo(nextView, passage = null) {
     panorama.setActive(true, resolved, passage);
     scheduleWorldEvent(resolved);
     room.classList.remove('transitioning');
-    status.textContent = 'Пространство незаметно смещается.';
+    setStatus('spaceShifts');
   }, 90);
 }
 
@@ -1056,7 +1114,7 @@ function action(name) {
     room.classList.add('window-open');
     sound.window();
     album.emerge();
-    status.textContent = 'Из окна входит холодный воздух.';
+    setStatus('coldAir');
   }
   if (name === 'curtain') { room.classList.add('curtain-moved'); sound.curtain(); album.breathe(); }
   if (name === 'crt') { room.classList.add('crt-awake'); sound.crt(); album.muffle(); }
@@ -1085,7 +1143,7 @@ function action(name) {
     memory.notebookPages += 1;
     if (memory.notebookPages >= 3 && !memory.notebookRevealed) {
       memory.notebookRevealed = true;
-      status.textContent = 'Страница помнит, что её уже открывали.';
+      setStatus('pageRemembers');
     }
     save();
     sound.paper();

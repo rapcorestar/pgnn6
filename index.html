@@ -11,6 +11,8 @@
     <meta property="og:type" content="music.album" />
     <meta property="music:album" content="https://band.link/pgnn6" />
     <meta property="og:locale" content="ru_RU" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="pgnn — six / Шесть" />
     <meta name="twitter:description" content="Шесть дней, чтобы создать человека. Шесть треков, чтобы его разобрать." />
@@ -21,7 +23,7 @@
     <title>pgnn — six</title>
     <script id="umami-tracker" defer src="https://cloud.umami.is/script.js" data-website-id="4c88495f-0d38-462c-b97a-bb4cf99e0264" data-domains="rapcorestar.github.io" data-do-not-track="true" data-performance="true"></script>
     <link rel="stylesheet" href="./styles.css?pgnn-six=1" />
-    <script type="application/ld+json">
+    <script id="album-structured-data" type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "MusicAlbum",
@@ -48,6 +50,12 @@
   <body>
     <main id="room" class="booting" data-view="foyer" data-variant="0" data-chapter="normalno" aria-label="pgnn — six, тихая квартира в синий час">
       <audio id="record" preload="metadata"></audio>
+
+      <nav id="language-switcher" class="language-switcher" aria-label="язык">
+        <button type="button" data-language="ru" aria-pressed="true">RU</button>
+        <button type="button" data-language="en" aria-pressed="false">EN</button>
+        <button type="button" data-language="fr" aria-pressed="false">FR</button>
+      </nav>
 
       <button id="entry-screen" class="entry-screen" type="button" aria-label="проснуться" aria-describedby="entry-state entry-device-note">
         <img src="./assets/pgnn-six/six-wordmark.png" alt="Шесть" />
