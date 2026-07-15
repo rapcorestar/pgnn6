@@ -87,7 +87,7 @@ const PANORAMAS = {
       { u: .76, v: .24, action: 'snowbank', radiusU: .07, radiusV: .08 },
       { u: .27, v: .66, action: 'building-window', radiusU: .06, radiusV: .09 },
       { u: .74, v: .50, to: 'tramstop', radiusU: .055, radiusV: .14 },
-      { u: .97, v: .49, to: 'supermarket-front', radiusU: .038, radiusV: .14 },
+      { u: .97, v: .49, to: 'supermarket-front', radiusU: .055, radiusV: .16 },
     ],
   },
   lobby: {
