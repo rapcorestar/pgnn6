@@ -87,6 +87,7 @@ const PANORAMAS = {
       { u: .76, v: .24, action: 'snowbank', radiusU: .07, radiusV: .08 },
       { u: .27, v: .66, action: 'building-window', radiusU: .06, radiusV: .09 },
       { u: .74, v: .50, to: 'tramstop', radiusU: .055, radiusV: .14 },
+      { u: .97, v: .49, to: 'supermarket-front', radiusU: .038, radiusV: .14 },
     ],
   },
   lobby: {
@@ -183,6 +184,35 @@ const PANORAMAS = {
       { u: .35, v: .60, action: 'tramstop-light', radiusU: .05, radiusV: .08 },
     ],
   },
+  'supermarket-front': {
+    src: './assets/pgnn-six/panorama-supermarket-front.png',
+    flipX: true,
+    hotspots: [
+      { u: .88, v: .50, to: 'courtyard', radiusU: .065, radiusV: .15 },
+      { u: .50, v: .50, to: 'supermarket-inside', radiusU: .07, radiusV: .16 },
+      { u: .50, v: .79, action: 'market-sign', radiusU: .12, radiusV: .07 },
+      { u: .65, v: .36, action: 'market-trolley', radiusU: .075, radiusV: .1 },
+      { u: .29, v: .34, action: 'market-cart', radiusU: .065, radiusV: .09 },
+      { u: .70, v: .12, action: 'market-receipt', radiusU: .055, radiusV: .055 },
+      { u: .30, v: .55, action: 'market-window', radiusU: .085, radiusV: .12 },
+    ],
+  },
+  'supermarket-inside': {
+    src: './assets/pgnn-six/panorama-supermarket-inside.png',
+    flipX: true,
+    hotspots: [
+      { u: .38, v: .55, to: 'supermarket-front', radiusU: .07, radiusV: .16 },
+      { u: .25, v: .38, action: 'market-water', radiusU: .045, radiusV: .08 },
+      { u: .29, v: .40, action: 'market-checkout-receipt', radiusU: .055, radiusV: .06 },
+      { u: .33, v: .47, action: 'market-scanner', radiusU: .045, radiusV: .075 },
+      { u: .40, v: .22, action: 'market-basket', radiusU: .06, radiusV: .075 },
+      { u: .98, v: .66, action: 'market-mirror', radiusU: .045, radiusV: .07 },
+      { u: .64, v: .53, action: 'market-freezer', radiusU: .08, radiusV: .15 },
+      { u: .20, v: .55, action: 'market-cigarettes', radiusU: .075, radiusV: .13 },
+      { u: .09, v: .49, action: 'market-backroom', radiusU: .055, radiusV: .14 },
+      { u: .50, v: .79, action: 'market-fluorescent', radiusU: .09, radiusV: .07 },
+    ],
+  },
 };
 
 export function createPanorama(root, onPortal, onGesture, onHover) {
@@ -199,7 +229,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
   renderer.setClearColor(0x000000, 0);
   root.append(renderer.domElement);
 
-  const placeCode = view => ({ foyer: 1, kitchen: 2, courtyard: 3, elevator: 4, basement: 5, bathroom: 6, corridor: 7, stairwell: 8, lobby: 9, attic: 10, roof: 11, tramstop: 12 }[view] || 0);
+  const placeCode = view => ({ foyer: 1, kitchen: 2, courtyard: 3, elevator: 4, basement: 5, bathroom: 6, corridor: 7, stairwell: 8, lobby: 9, attic: 10, roof: 11, tramstop: 12, 'supermarket-front': 13, 'supermarket-inside': 14 }[view] || 0);
   function panoramaMaterial(transparent = false) {
     return new THREE.ShaderMaterial({
       side: THREE.BackSide,
@@ -208,6 +238,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
       depthWrite: !transparent,
       uniforms: {
         uMap: { value: null },
+        uFlipX: { value: 0 },
         uTime: { value: 0 },
         uPlace: { value: 0 },
         uCycle: { value: 0 },
@@ -232,6 +263,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
       fragmentShader: `
         varying vec2 vUv;
         uniform sampler2D uMap;
+        uniform float uFlipX;
         uniform float uTime;
         uniform float uPlace;
         uniform float uCycle;
@@ -272,23 +304,26 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
           return (1.0 - smoothstep(.025, .105, length(cell - offset * .72))) * present;
         }
         void main() {
-          vec4 source = texture2D(uMap, vUv);
+          vec2 textureUv = vec2(mix(vUv.x, 1.0 - vUv.x, uFlipX), vUv.y);
+          vec4 source = texture2D(uMap, textureUv);
           if (uMotion > .001) {
             vec2 screenUv = gl_FragCoord.xy / max(uResolution, vec2(1.0));
             vec2 radialVelocity = (screenUv - .5) * (.014 * uRadialMotion);
             vec2 walkingVelocity = vec2(.0018, -.00055) * uRadialMotion;
             vec2 lookVelocity = uMotionVector * (.0048 * uMotion);
             vec2 smear = radialVelocity + walkingVelocity + lookVelocity;
+            vec2 textureSmear = vec2(mix(smear.x, -smear.x, uFlipX), smear.y);
             vec3 motionColour = source.rgb * .26;
-            motionColour += texture2D(uMap, vUv - smear * 1.15).rgb * .18;
-            motionColour += texture2D(uMap, vUv - smear * .56).rgb * .2;
-            motionColour += texture2D(uMap, vUv + smear * .42).rgb * .2;
-            motionColour += texture2D(uMap, vUv + smear * .9).rgb * .16;
+            motionColour += texture2D(uMap, textureUv - textureSmear * 1.15).rgb * .18;
+            motionColour += texture2D(uMap, textureUv - textureSmear * .56).rgb * .2;
+            motionColour += texture2D(uMap, textureUv + textureSmear * .42).rgb * .2;
+            motionColour += texture2D(uMap, textureUv + textureSmear * .9).rgb * .16;
             vec2 chroma = (screenUv - .5) * (.0055 * uRadialMotion)
               + vec2(.00115, -.0003) * uRadialMotion
               + uMotionVector * (.0014 * uMotion);
-            float separatedRed = texture2D(uMap, vUv + chroma - smear * .34).r;
-            float separatedBlue = texture2D(uMap, vUv - chroma + smear * .28).b;
+            vec2 textureChroma = vec2(mix(chroma.x, -chroma.x, uFlipX), chroma.y);
+            float separatedRed = texture2D(uMap, textureUv + textureChroma - textureSmear * .34).r;
+            float separatedBlue = texture2D(uMap, textureUv - textureChroma + textureSmear * .28).b;
             source.rgb = mix(motionColour, vec3(separatedRed, motionColour.g, separatedBlue), .74 * uMotion);
           }
           vec3 colour = source.rgb;
@@ -504,6 +539,8 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
     attic: 1.56,
     roof: 1.54,
     tramstop: 1.57,
+    'supermarket-front': -1.57,
+    'supermarket-inside': 3.33,
   }[view] || 0);
   const entryPitch = view => ({
     foyer: -.42,
@@ -518,6 +555,8 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
     attic: -.05,
     roof: -.08,
     tramstop: -.045,
+    'supermarket-front': .27,
+    'supermarket-inside': -.045,
   }[view] || 0);
 
   function render(frameTime) {
@@ -605,6 +644,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
   function blendTexture(texture, duration, done, travelTarget = null) {
     if (!sphere.material.uniforms.uMap.value) {
       sphere.material.uniforms.uMap.value = texture;
+      sphere.material.uniforms.uFlipX.value = incoming.material.uniforms.uFlipX.value;
       sphere.material.uniforms.uPlace.value = incoming.material.uniforms.uPlace.value;
       sphere.material.uniforms.uCycle.value = incoming.material.uniforms.uCycle.value;
       sphere.material.uniforms.uReturn.value = incoming.material.uniforms.uReturn.value;
@@ -652,6 +692,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
       render();
       if (progress < 1) { blendFrame = requestAnimationFrame(frame); return; }
       sphere.material.uniforms.uMap.value = texture;
+      sphere.material.uniforms.uFlipX.value = incoming.material.uniforms.uFlipX.value;
       sphere.material.uniforms.uPlace.value = incoming.material.uniforms.uPlace.value;
       sphere.material.uniforms.uCycle.value = incoming.material.uniforms.uCycle.value;
       sphere.material.uniforms.uReturn.value = incoming.material.uniforms.uReturn.value;
@@ -684,6 +725,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
     const source = variants[Math.max(loop, variant) % variants.length];
     const request = ++textureRequest;
     incoming.material.uniforms.uPlace.value = placeCode(view);
+    incoming.material.uniforms.uFlipX.value = next.flipX ? 1 : 0;
     incoming.material.uniforms.uCycle.value = cycle;
     incoming.material.uniforms.uReturn.value = returnCount;
     const passage = typeof travel === 'object' ? travel : null;

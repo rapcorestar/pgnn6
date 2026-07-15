@@ -4,7 +4,7 @@
 
 > An apartment that remembers more than its visitor.
 
-`pgnn — six` is a browser-native audiovisual installation built around six compositions and one endlessly returning winter world. It is not a game, an interactive album, or a collection of puzzles. The visitor wakes inside a recently interrupted apartment, follows unmarked details through twelve connected 360° spaces, and gradually discovers that the building remembers their attention.
+`pgnn — six` is a browser-native audiovisual installation built around six compositions and one endlessly returning winter world. It is not a game, an interactive album, or a collection of puzzles. The visitor wakes inside a recently interrupted apartment, follows unmarked details through fourteen connected 360° spaces, and gradually discovers that the world remembers their attention.
 
 The complete album runs invisibly through the installation. There is no player, track list, progress bar, inventory, map, or ending screen.
 
@@ -20,8 +20,8 @@ The complete album runs invisibly through the installation. There is no player, 
 
 ## Experience
 
-- Twelve connected panoramic locations: apartment, kitchen, bathroom, stairwell, courtyard, lobby, basement, corridor, elevator, attic, roof, and tram stop.
-- More than eighty unmarked object and passage zones plus detailed close-up interactions.
+- Fourteen connected panoramic locations: apartment, kitchen, bathroom, stairwell, courtyard, lobby, basement, corridor, elevator, attic, roof, tram stop, the exterior of a neighbourhood supermarket, and its recently interrupted interior.
+- More than ninety unmarked object and passage zones plus detailed close-up interactions.
 - Rabbit-hole routes that fold one location into another instead of returning a fixed result.
 - Browser persistence for visits, location returns, object touches, album position, environmental decay, and spatial mutations.
 - Live music analysis driving practical light, CRT glow, exposure, dust, snow, weather, and song-specific grading.

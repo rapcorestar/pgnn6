@@ -77,6 +77,8 @@ body { background: #08090a; }
 #panorama[data-location="attic"]::before { opacity: .11; background: radial-gradient(circle at 65% 42%, rgba(255,181,83,.43), transparent 16%), radial-gradient(circle at 50% 51%, rgba(91,151,199,.12), transparent 25%); animation: practical-flicker 9s infinite; }
 #panorama[data-location="roof"]::before { opacity: .07; background: linear-gradient(100deg, transparent 15%, rgba(134,183,218,.12) 47%, transparent 76%); animation: roof-light-pass 15s ease-in-out infinite; }
 #panorama[data-location="tramstop"]::before { opacity: .12; background: linear-gradient(100deg, transparent 18%, rgba(255,191,91,.2) 47%, rgba(180,57,31,.08) 58%, transparent 78%); animation: tram-light-pass 12s ease-in-out infinite; }
+#panorama[data-location="supermarket-front"]::before { opacity: .1; background: radial-gradient(ellipse at 50% 34%, rgba(247,187,0,.22), transparent 24%), linear-gradient(100deg, transparent 24%, rgba(255,205,132,.12) 49%, transparent 72%); animation: practical-flicker 15s infinite; }
+#panorama[data-location="supermarket-inside"]::before { opacity: .075; background: linear-gradient(180deg, rgba(217,226,204,.2), transparent 35%), radial-gradient(circle at 67% 47%, rgba(247,187,0,.09), transparent 18%); animation: practical-flicker 9s infinite; }
 #panorama.travelling::before { opacity: 0; mix-blend-mode: screen; background: linear-gradient(90deg,rgba(222,51,37,.13),transparent 7% 91%,rgba(45,119,218,.16)); animation: travel-prism 2.25s cubic-bezier(.22,.7,.2,1) both; }
 @keyframes practical-flicker { 0%, 16%, 17%, 48%, 49%, 100% { filter: brightness(1); } 16.4%, 48.4% { filter: brightness(.76); } }
 @keyframes roof-light-pass { 0%,100% { transform: translateX(-12%); opacity: .035; } 50% { transform: translateX(12%); opacity: .09; } }
@@ -85,10 +87,10 @@ body { background: #08090a; }
 @keyframes passage-surge { 0% { opacity: 0; } 24% { opacity: .42; } 68% { opacity: .25; } 100% { opacity: 0; } }
 @keyframes travel-prism { 0%,100% { opacity: 0; transform: scaleX(1); } 29% { opacity: .08; } 52% { opacity: .24; transform: scaleX(1.035); } 72% { opacity: .1; } }
 @keyframes travel-camera { 0% { filter: brightness(1.03) saturate(.94) contrast(1.01) blur(0); transform: scale(1); } 28% { filter: brightness(.98) saturate(.88) contrast(1.04) blur(.5px); transform: scale(1.025); } 52% { filter: brightness(.91) saturate(.82) contrast(1.08) blur(1.65px); transform: scale(1.07); } 74% { filter: brightness(.96) saturate(.88) contrast(1.05) blur(.65px); transform: scale(1.038); } 100% { filter: brightness(1.03) saturate(.94) contrast(1.01) blur(0); transform: scale(1); } }
-#room[data-world-event="lamp-dip"] #panorama canvas { animation: world-lamp-dip 2.5s steps(1,end); }
-#room[data-world-event="crt-pulse"] #panorama::before, #room[data-world-event="intercom-breath"] #panorama::before { opacity: .18; animation: world-electric-pulse 2.3s ease both; }
-#room[data-world-event="fridge-cycle"] #panorama canvas, #room[data-world-event="boiler-cycle"] #panorama canvas, #room[data-world-event="pipe-knock"] #panorama canvas { animation: world-machine-shudder 1.7s ease both; }
-#room[data-world-event="footsteps"] #panorama canvas, #room[data-world-event="door-breath"] #panorama canvas { animation: world-footstep 2.8s ease both; }
+#room[data-world-event="lamp-dip"] #panorama canvas, #room[data-world-event="fluorescent-fail"] #panorama canvas { animation: world-lamp-dip 2.5s steps(1,end); }
+#room[data-world-event="crt-pulse"] #panorama::before, #room[data-world-event="intercom-breath"] #panorama::before, #room[data-world-event="sign-flicker"] #panorama::before, #room[data-world-event="scanner-pulse"] #panorama::before { opacity: .18; animation: world-electric-pulse 2.3s ease both; }
+#room[data-world-event="fridge-cycle"] #panorama canvas, #room[data-world-event="boiler-cycle"] #panorama canvas, #room[data-world-event="pipe-knock"] #panorama canvas, #room[data-world-event="freezer-cycle"] #panorama canvas { animation: world-machine-shudder 1.7s ease both; }
+#room[data-world-event="footsteps"] #panorama canvas, #room[data-world-event="door-breath"] #panorama canvas, #room[data-world-event="cart-roll"] #panorama canvas { animation: world-footstep 2.8s ease both; }
 #room[data-world-event="wind-gust"] #atmosphere { animation: world-wind 3.4s ease both; }
 #room[data-world-event="wind-gust"] #panorama canvas, #room[data-world-event="antenna-twitch"] #panorama canvas, #room[data-world-event="cable-twitch"] #panorama canvas { animation: world-gust-camera 3.3s ease both; }
 #room[data-world-event="tram-pass"] #panorama::before, #room[data-world-event="distant-tram"] #panorama::before, #room[data-world-event="light-pass"] #panorama::before, #room[data-world-event="window-pulse"] #panorama::before { opacity: .2; animation: world-passing-light 3.2s ease both; }
@@ -122,6 +124,8 @@ body { background: #08090a; }
 .detail-frame[data-action="mailboxes"] .detail-portal { left: 0; top: 4%; width: 42%; height: 71%; }
 .detail-frame[data-action="valve"] .detail-portal { left: 14%; top: 35%; width: 31%; height: 48%; }
 .detail-frame[data-action="tram"] .detail-portal { left: 35%; top: 27%; width: 47%; height: 27%; }
+.detail-frame[data-detail-scene="supermarket-front"] .detail-portal { left: 45%; top: 25%; width: 22%; height: 42%; border-radius: 6%; }
+.detail-frame[data-detail-scene="supermarket-inside"] .detail-portal { left: 45%; top: 16%; width: 18%; height: 34%; border-radius: 6%; }
 .detail-actions { position: absolute; z-index: 6; inset: 0; pointer-events: none; }
 .detail-touch { position: absolute; left: var(--touch-x); top: var(--touch-y); width: var(--touch-w); height: var(--touch-h); padding: 0; border: 0; border-radius: 42%; opacity: .001; outline: none; background: transparent; pointer-events: auto; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cg fill='none' stroke='%23f7bb00' stroke-width='1.25'%3E%3Ccircle cx='14' cy='14' r='8' stroke-dasharray='2 3'/%3E%3Cpath d='M14 5v4M14 19v4M5 14h4M19 14h4'/%3E%3C/g%3E%3Ccircle cx='14' cy='14' r='1.7' fill='%23f7bb00'/%3E%3C/svg%3E") 14 14, pointer; }
 .detail-frame:not(.active) .detail-touch { pointer-events: none; }
@@ -184,6 +188,8 @@ body { background: #08090a; }
 .detail-frame[data-action="shoes"] { --rabbit-origin-x: 59%; --rabbit-origin-y: 84%; }
 .detail-frame[data-action="mirror"], .detail-frame[data-action="elevator-mirror"] { --rabbit-origin-x: 54%; --rabbit-origin-y: 32%; }
 .detail-frame[data-action="cassette"], .detail-frame[data-action="boombox"] { --rabbit-origin-x: 70%; --rabbit-origin-y: 38%; }
+.detail-frame[data-detail-scene="supermarket-front"] { --rabbit-origin-x: 56%; --rabbit-origin-y: 45%; }
+.detail-frame[data-detail-scene="supermarket-inside"] { --rabbit-origin-x: 54%; --rabbit-origin-y: 34%; }
 .detail-frame.rabbit-open .rabbit-hole { opacity: 1; pointer-events: auto; animation: rabbit-exposure 2.55s cubic-bezier(.18,.72,.18,1) both; }
 .detail-frame.rabbit-open > img { opacity: 1; transform-origin: var(--rabbit-origin-x) var(--rabbit-origin-y); animation: rabbit-camera-fall 2.55s cubic-bezier(.16,.72,.18,1) both; }
 .detail-frame.rabbit-open .detail-portal { pointer-events: none; }
@@ -302,9 +308,17 @@ body { background: #08090a; }
 #room.corridor-lamp-seen #panorama[data-location="corridor"] canvas { filter: brightness(1.07) saturate(.91); }
 #room.elevator-mirror-seen #panorama[data-location="elevator"] canvas { filter: brightness(.98) saturate(.82) contrast(1.08); }
 #room.elevator-button-seen #panorama[data-location="elevator"] canvas { filter: brightness(1.055) saturate(.91); }
+#room.market-front-touched #panorama[data-location="supermarket-front"] canvas { filter: brightness(1.015) saturate(.84) contrast(1.055); }
+#room.market-inside-touched #panorama[data-location="supermarket-inside"] canvas { filter: brightness(.985) saturate(.76) contrast(1.075); }
 #panorama[data-cycle="1"][data-location="courtyard"] canvas { filter: brightness(1.03) saturate(.84) contrast(1.05); }
 #panorama[data-cycle="2"][data-location="courtyard"] canvas { filter: brightness(1.08) saturate(.9) contrast(1.03); }
 #panorama[data-cycle="3"][data-location="courtyard"] canvas { filter: brightness(.99) saturate(.77) contrast(1.08); }
+#panorama[data-cycle="1"][data-location="supermarket-front"] canvas { filter: brightness(1.045) saturate(.88) contrast(1.04); }
+#panorama[data-cycle="2"][data-location="supermarket-front"] canvas { filter: brightness(.98) saturate(.74) contrast(1.09); }
+#panorama[data-cycle="3"][data-location="supermarket-front"] canvas { filter: brightness(1.02) saturate(.81) contrast(1.065); }
+#panorama[data-cycle="1"][data-location="supermarket-inside"] canvas { filter: brightness(.97) saturate(.73) contrast(1.08); }
+#panorama[data-cycle="2"][data-location="supermarket-inside"] canvas { filter: brightness(1.035) saturate(.82) contrast(1.045); }
+#panorama[data-cycle="3"][data-location="supermarket-inside"] canvas { filter: brightness(.94) saturate(.67) contrast(1.105); }
 #room[data-chapter="casting"] #panorama { filter: brightness(.99) saturate(.88) contrast(1.025); }
 #room[data-chapter="water"] #panorama { filter: brightness(1.02) saturate(.94) contrast(1.02); }
 #room[data-chapter="knockout"] #panorama { filter: brightness(.97) saturate(.84) contrast(1.055); }

@@ -105,6 +105,8 @@ const DETAIL_SCENES = {
   attic: { src: './assets/pgnn-six/detail-attic-matched.png' },
   roof: { src: './assets/pgnn-six/detail-roof-matched.png' },
   tramstop: { src: './assets/pgnn-six/detail-tramstop-matched.png' },
+  'supermarket-front': { src: './assets/pgnn-six/detail-supermarket-front-matched.png' },
+  'supermarket-inside': { src: './assets/pgnn-six/detail-supermarket-inside-matched.png' },
 };
 
 const DETAIL_TOUCHES = {
@@ -169,6 +171,18 @@ const DETAIL_TOUCHES = {
     { id: 'tramstop-time', label: 'поднять остановившиеся часы', action: 'tramstop-watch', effect: 'mechanical', sound: 'panel', x: 48, y: 69, w: 18, h: 20 },
     { id: 'tramstop-tram', label: 'следить за приближающимся трамваем', action: 'tramstop-tram', effect: 'signal', sound: 'tram', x: 62, y: 8, w: 33, h: 49 },
   ],
+  'supermarket-front': [
+    { id: 'market-front-sign', label: 'посмотреть на дрожащую вывеску', action: 'market-sign', effect: 'light', sound: 'lamp', x: 37, y: 3, w: 38, h: 22 },
+    { id: 'market-front-trolley', label: 'толкнуть ржавую тележку', action: 'market-trolley', effect: 'mechanical', sound: 'rail', x: 24, y: 45, w: 21, h: 34 },
+    { id: 'market-front-cart', label: 'проверить брошенную корзину', action: 'market-cart', effect: 'footprint', sound: 'shoes', x: 80, y: 50, w: 19, h: 34 },
+    { id: 'market-front-receipt', label: 'поднять чек из слякоти', action: 'market-receipt', effect: 'paper', sound: 'paper', x: 20, y: 80, w: 25, h: 18 },
+  ],
+  'supermarket-inside': [
+    { id: 'market-inside-water', label: 'взять воду', action: 'market-water', effect: 'water', sound: 'tap', x: 79, y: 49, w: 19, h: 36 },
+    { id: 'market-inside-receipt', label: 'развернуть забытый чек', action: 'market-checkout-receipt', effect: 'paper', sound: 'paper', x: 67, y: 52, w: 17, h: 18 },
+    { id: 'market-inside-scanner', label: 'провести ладонью над сканером', action: 'market-scanner', effect: 'signal', sound: 'panel', x: 47, y: 34, w: 12, h: 24 },
+    { id: 'market-inside-basket', label: 'подвинуть пустую корзину', action: 'market-basket', effect: 'footprint', sound: 'shoes', x: 36, y: 64, w: 18, h: 28 },
+  ],
 };
 
 const ACTION_DETAIL = {
@@ -184,6 +198,8 @@ const ACTION_DETAIL = {
   'attic-suitcase': 'attic', 'attic-cable': 'attic', 'attic-shirt': 'attic', 'attic-chair': 'attic', 'attic-bulb': 'attic', 'attic-window': 'attic', 'attic-boxes': 'attic',
   'roof-antenna': 'roof', 'roof-cable': 'roof', 'roof-tracks': 'roof', 'roof-vent': 'roof', 'roof-hatch-light': 'roof', 'roof-edge': 'roof',
   'tramstop-glass': 'tramstop', 'tramstop-bench': 'tramstop', 'tramstop-tram': 'tramstop', 'tramstop-rails': 'tramstop', 'tramstop-snow': 'tramstop', 'tramstop-light': 'tramstop', 'tramstop-watch': 'tramstop',
+  'market-sign': 'supermarket-front', 'market-door': 'supermarket-front', 'market-trolley': 'supermarket-front', 'market-cart': 'supermarket-front', 'market-receipt': 'supermarket-front', 'market-window': 'supermarket-front',
+  'market-water': 'supermarket-inside', 'market-checkout-receipt': 'supermarket-inside', 'market-scanner': 'supermarket-inside', 'market-basket': 'supermarket-inside', 'market-mirror': 'supermarket-inside', 'market-freezer': 'supermarket-inside', 'market-cigarettes': 'supermarket-inside', 'market-backroom': 'supermarket-inside', 'market-fluorescent': 'supermarket-inside',
 };
 
 const RABBIT_MODE = {
@@ -200,13 +216,15 @@ const RABBIT_MODE = {
   'attic-suitcase': 'manuscript', 'attic-shirt': 'memory', 'attic-boxes': 'memory', 'roof-tracks': 'footsteps',
   'roof-vent': 'machine', 'roof-hatch-light': 'threshold', 'roof-edge': 'outside', 'attic-window': 'outside',
   'tramstop-glass': 'water', 'tramstop-bench': 'memory', 'tramstop-rails': 'footsteps', 'tramstop-snow': 'outside', 'tramstop-light': 'outside', 'tramstop-watch': 'machine',
+  'market-sign': 'terminal', 'market-door': 'threshold', 'market-trolley': 'footsteps', 'market-cart': 'footsteps', 'market-receipt': 'manuscript', 'market-window': 'outside',
+  'market-water': 'water', 'market-checkout-receipt': 'manuscript', 'market-scanner': 'terminal', 'market-basket': 'memory', 'market-mirror': 'reflection', 'market-freezer': 'machine', 'market-cigarettes': 'memory', 'market-backroom': 'threshold', 'market-fluorescent': 'terminal',
 };
-const SCENE_MODE = { desk: 'memory', kitchen: 'machine', bathroom: 'reflection', stairwell: 'footsteps', corridor: 'threshold', elevator: 'reflection', courtyard: 'outside', lobby: 'names', basement: 'machine', attic: 'memory', roof: 'outside', tramstop: 'water' };
+const SCENE_MODE = { desk: 'memory', kitchen: 'machine', bathroom: 'reflection', stairwell: 'footsteps', corridor: 'threshold', elevator: 'reflection', courtyard: 'outside', lobby: 'names', basement: 'machine', attic: 'memory', roof: 'outside', tramstop: 'water', 'supermarket-front': 'outside', 'supermarket-inside': 'machine' };
 const RABBIT_DESTINATIONS = {
-  terminal: ['corridor', 'elevator', 'basement', 'attic', 'roof'], manuscript: ['stairwell', 'basement', 'foyer', 'attic'], reflection: ['elevator', 'bathroom', 'corridor'],
-  water: ['courtyard', 'bathroom', 'basement', 'tramstop'], tape: ['kitchen', 'lobby', 'foyer', 'tramstop'], footsteps: ['stairwell', 'courtyard', 'corridor', 'roof'],
-  threshold: ['corridor', 'basement', 'lobby', 'attic'], outside: ['courtyard', 'stairwell', 'foyer', 'roof', 'tramstop'], names: ['lobby', 'corridor', 'elevator'],
-  machine: ['basement', 'elevator', 'kitchen', 'tramstop'], memory: ['foyer', 'stairwell', 'basement', 'attic'],
+  terminal: ['corridor', 'elevator', 'basement', 'attic', 'roof', 'supermarket-inside'], manuscript: ['stairwell', 'basement', 'foyer', 'attic', 'supermarket-inside'], reflection: ['elevator', 'bathroom', 'corridor', 'supermarket-inside'],
+  water: ['courtyard', 'bathroom', 'basement', 'tramstop', 'supermarket-inside'], tape: ['kitchen', 'lobby', 'foyer', 'tramstop'], footsteps: ['stairwell', 'courtyard', 'corridor', 'roof', 'supermarket-front'],
+  threshold: ['corridor', 'basement', 'lobby', 'attic', 'supermarket-front', 'supermarket-inside'], outside: ['courtyard', 'stairwell', 'foyer', 'roof', 'tramstop', 'supermarket-front'], names: ['lobby', 'corridor', 'elevator'],
+  machine: ['basement', 'elevator', 'kitchen', 'tramstop', 'supermarket-inside'], memory: ['foyer', 'stairwell', 'basement', 'attic', 'supermarket-inside'],
 };
 
 const PERSISTENT_ACTION_CLASSES = {
@@ -220,10 +238,10 @@ const PERSISTENT_ACTION_CLASSES = {
   'record-player': 'record-heard', sink: 'water-heard', 'bathroom-pipe': 'water-heard', 'kitchen-window': 'cold-air',
 };
 const MEMORY_GROUPS = {
-  electric: ['crt', 'lamp', 'panel', 'intercom', 'elevator-button', 'attic-cable', 'roof-antenna', 'roof-cable', 'record-player'],
-  water: ['window', 'tap', 'sink', 'kettle', 'bathroom-pipe', 'stair-window', 'corridor-window', 'basement-window', 'tramstop-glass', 'snowbank'],
-  movement: ['chair', 'shoes', 'bed', 'stair-step', 'tracks', 'roof-tracks', 'corridor-door', 'basement-door', 'courtyard-gate', 'attic-chair'],
-  decay: ['plant', 'mirror', 'cabinet', 'boiler', 'valve', 'mailboxes', 'attic-suitcase', 'attic-shirt', 'attic-boxes'],
+  electric: ['crt', 'lamp', 'panel', 'intercom', 'elevator-button', 'attic-cable', 'roof-antenna', 'roof-cable', 'record-player', 'market-sign', 'market-scanner', 'market-fluorescent'],
+  water: ['window', 'tap', 'sink', 'kettle', 'bathroom-pipe', 'stair-window', 'corridor-window', 'basement-window', 'tramstop-glass', 'snowbank', 'market-water', 'market-freezer'],
+  movement: ['chair', 'shoes', 'bed', 'stair-step', 'tracks', 'roof-tracks', 'corridor-door', 'basement-door', 'courtyard-gate', 'attic-chair', 'market-trolley', 'market-cart', 'market-basket'],
+  decay: ['plant', 'mirror', 'cabinet', 'boiler', 'valve', 'mailboxes', 'attic-suitcase', 'attic-shirt', 'attic-boxes', 'market-receipt', 'market-checkout-receipt', 'market-cigarettes', 'market-backroom'],
 };
 
 // Object/song resonance only affects the mix. Lyric choice always follows active playback.
@@ -237,6 +255,8 @@ const ACTION_TRACK = {
   'attic-suitcase': 'normalno', 'attic-cable': 'casting', 'attic-shirt': 'rejumper', 'attic-chair': 'rejumper',
   'roof-antenna': 'casting', 'roof-cable': 'casting', 'roof-tracks': 'rejumper', 'roof-edge': 'water',
   'tramstop-glass': 'water', 'tramstop-bench': 'water', 'tramstop-tram': 'water', 'tramstop-rails': 'knockout', 'tramstop-watch': 'knockout',
+  'market-sign': 'knockout', 'market-door': 'knockout', 'market-trolley': 'knockout', 'market-cart': 'knockout', 'market-receipt': 'knockout', 'market-window': 'knockout',
+  'market-water': 'knockout', 'market-checkout-receipt': 'knockout', 'market-scanner': 'knockout', 'market-basket': 'knockout', 'market-mirror': 'knockout', 'market-freezer': 'knockout', 'market-cigarettes': 'knockout', 'market-backroom': 'knockout', 'market-fluorescent': 'knockout',
 };
 const LYRIC_EVIDENCE = {
   normalno: [
@@ -288,6 +308,14 @@ const LYRIC_EVIDENCE = {
     'Слово — калека, тупое орудие.',
   ],
 };
+const SCENE_LYRIC_EVIDENCE = {
+  'supermarket-front': {
+    knockout: ['Я захожу в «Дикси» за водой, как в раздевалку после проигранного боя.'],
+  },
+  'supermarket-inside': {
+    knockout: ['Я ищу в карманах не монеты, а доказательства того, что я был тут.'],
+  },
+};
 const sound = createSoundscape();
 const album = createAlbum(recordElement);
 panoramaRoot.dataset.loop = String(memory.loops);
@@ -313,12 +341,16 @@ const panorama = createPanorama(panoramaRoot, portal => {
     foyer: 'в комнату', kitchen: 'на кухню', bathroom: 'в ванную', stairwell: 'на лестницу',
     courtyard: 'во двор', lobby: 'в подъезд', basement: 'в подвал', corridor: 'в коридор', elevator: 'в лифт',
     attic: 'на чердак', roof: 'на крышу', tramstop: 'к остановке',
+    'supermarket-front': 'к магазину', 'supermarket-inside': 'в магазин',
   };
   if (event) {
     passageHint.style.setProperty('--hint-x', `${event.clientX}px`);
     passageHint.style.setProperty('--hint-y', `${event.clientY}px`);
   }
-  passageHint.textContent = hotspot.loop ? 'дальше' : names[hotspot.to] || 'пройти';
+  const passageName = currentView === 'supermarket-inside' && hotspot.to === 'supermarket-front'
+    ? 'наружу'
+    : names[hotspot.to] || 'пройти';
+  passageHint.textContent = hotspot.loop ? 'дальше' : passageName;
   passageHint.classList.add('visible');
 });
 
@@ -495,6 +527,8 @@ function syncPersistentWorld() {
   room.classList.toggle('attic-touched', Object.keys(actions).some(name => name.startsWith('attic-') && actions[name] > 0));
   room.classList.toggle('roof-touched', Object.keys(actions).some(name => name.startsWith('roof-') && actions[name] > 0));
   room.classList.toggle('tramstop-touched', Object.keys(actions).some(name => name.startsWith('tramstop-') && actions[name] > 0));
+  room.classList.toggle('market-front-touched', Object.keys(actions).some(name => ACTION_DETAIL[name] === 'supermarket-front' && actions[name] > 0));
+  room.classList.toggle('market-inside-touched', Object.keys(actions).some(name => ACTION_DETAIL[name] === 'supermarket-inside' && actions[name] > 0));
   const score = names => {
     const touches = names.reduce((total, name) => total + (actions[name] || 0), 0);
     return Math.min(1, 1 - Math.exp(-touches * .42));
@@ -613,6 +647,8 @@ const LOCATION_EVENTS = {
   attic: ['cable-twitch', 'wind-gust', 'lamp-dip'],
   roof: ['antenna-twitch', 'wind-gust', 'distant-tram'],
   tramstop: ['tram-pass', 'wind-gust', 'light-pass'],
+  'supermarket-front': ['sign-flicker', 'wind-gust', 'cart-roll'],
+  'supermarket-inside': ['freezer-cycle', 'fluorescent-fail', 'scanner-pulse'],
 };
 
 function scheduleWorldEvent(location = currentView, delay = 7600 + Math.random() * 8600) {
@@ -633,9 +669,11 @@ function scheduleWorldEvent(location = currentView, delay = 7600 + Math.random()
     room.removeAttribute('data-world-event');
     requestAnimationFrame(() => { room.dataset.worldEvent = eventName; });
     if (['pipe-knock', 'boiler-cycle'].includes(eventName)) sound.pipes();
+    else if (eventName === 'freezer-cycle') sound.fridge();
     else if (['tram-pass', 'distant-tram'].includes(eventName)) sound.tram();
     else if (['lift-arrival'].includes(eventName)) sound.elevator();
-    else if (['cable-twitch', 'antenna-twitch', 'crt-pulse'].includes(eventName)) sound.panel();
+    else if (['cable-twitch', 'antenna-twitch', 'crt-pulse', 'sign-flicker', 'scanner-pulse', 'fluorescent-fail'].includes(eventName)) sound.panel();
+    else if (eventName === 'cart-roll') sound.rail();
     else if (['footsteps', 'door-breath'].includes(eventName)) sound.door();
     else sound.touch();
     worldEventClearTimer = window.setTimeout(() => {
@@ -892,7 +930,8 @@ rabbitThreshold?.addEventListener('click', event => {
 function syncLyricEvidence(forceNew = false) {
   if (!lyricEvidence || !detailFrame) return;
   const track = ALBUM.find(item => item.id === room.dataset.chapter);
-  const fragments = track ? LYRIC_EVIDENCE[track.id] || [] : [];
+  const sceneFragments = track ? SCENE_LYRIC_EVIDENCE[currentDetailScene]?.[track.id] : null;
+  const fragments = sceneFragments?.length ? sceneFragments : track ? LYRIC_EVIDENCE[track.id] || [] : [];
   if (!track || !fragments.length) {
     lyricEvidence.textContent = '';
     detailFrame.removeAttribute('data-track');
@@ -1088,6 +1127,17 @@ function action(name) {
     if (name === 'tramstop-tram') sound.tram();
     else if (name === 'tramstop-glass') sound.tap();
     else sound.bench();
+  }
+  if (name.startsWith('market-')) {
+    room.classList.add(ACTION_DETAIL[name] === 'supermarket-front' ? 'market-front-touched' : 'market-inside-touched');
+    if (name === 'market-water') sound.tap();
+    else if (name === 'market-mirror') sound.mirror();
+    else if (name === 'market-freezer') sound.fridge();
+    else if (name === 'market-scanner' || name === 'market-fluorescent' || name === 'market-sign') sound.panel();
+    else if (name === 'market-trolley' || name === 'market-cart' || name === 'market-basket') sound.rail();
+    else if (name === 'market-door' || name === 'market-backroom') sound.door();
+    else if (name === 'market-window') sound.window();
+    else sound.paper();
   }
   syncPersistentWorld();
   save();
@@ -1332,6 +1382,8 @@ function createAlbum(element) {
       if (view === 'attic') fade(.17, 7);
       if (view === 'roof') fade(.24, 9);
       if (view === 'tramstop') fade(.28, 8);
+      if (view === 'supermarket-front') fade(.24, 7);
+      if (view === 'supermarket-inside') fade(.2, 6);
     },
     evidence(action) {
       const track = ACTION_TRACK[action];
@@ -1516,7 +1568,7 @@ function renderAtmosphere(time) {
   if (!atmosphereContext) return;
   atmosphereContext.clearRect(0, 0, innerWidth, innerHeight);
   const location = panoramaRoot?.dataset.location || 'foyer';
-  const exterior = ['courtyard', 'roof', 'tramstop'].includes(location);
+  const exterior = ['courtyard', 'roof', 'tramstop', 'supermarket-front'].includes(location);
   const cycle = Number(panoramaRoot?.dataset.cycle) || 0;
   const returnCount = Number(panoramaRoot?.dataset.returnCount) || 0;
   const musicLift = Math.round(musicState.mid * 20 + musicState.high * 10);
@@ -1553,7 +1605,7 @@ function renderAtmosphere(time) {
 }
 
 function snowRect() {
-  if (['courtyard', 'roof', 'tramstop'].includes(panoramaRoot?.dataset.location)) {
+  if (['courtyard', 'roof', 'tramstop', 'supermarket-front'].includes(panoramaRoot?.dataset.location)) {
     return { left: 0, top: 0, width: innerWidth, height: innerHeight };
   }
   if (currentView !== 'window') return null;

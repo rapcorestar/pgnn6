@@ -8,7 +8,7 @@ The record is not a soundtrack placed behind a room. Its six movements alter the
 | `Прыжок` | Stairwell, repeated floor landings, attic, roof | The same decision appears as a different landing; the antenna promises another field while the snow preserves evidence of a jump. |
 | `Кастинг` | CRT, bathroom mirror, cabinet, roof aerial | The apartment performs identity as damaged domestic equipment; an antenna becomes a literal attempt to correct the signal. |
 | `Состояние воды` | Window, fogged glass, tram stop, kitchen glow | Condensation can be disturbed, the stopped watch can be found, and transit keeps arriving without offering an ending. |
-| `Октагон` | Elevator, stair rail, threshold | The building becomes a pressure system: an unreturned lift, an empty landing, a room reached again. |
+| `Октагон` | Elevator, stair rail, threshold, ДИКСИ checkout | The building becomes a pressure system: an unreturned lift, an empty landing, a bottle of water and receipt left where proof of a life should be. |
 | `Слово` | The accumulated building and its attic archive | Warmth thins, the suitcase and cable turn language into material evidence, and the final state does not explain itself. |
 
 ## Playback behavior
