@@ -109,6 +109,7 @@ let statusState = { key: 'quiet', touchId: '' };
 let currentLanguage = resolveLanguage();
 const musicState = { low: 0, mid: 0, high: 0, energy: 0, progress: 0, chapter: 0, active: false };
 let lastMusicResponse = 0;
+const captureReel = new URLSearchParams(location.search).get('capture') === 'reel';
 
 function resolveLanguage() {
   const requested = new URLSearchParams(window.location.search).get('lang');
@@ -186,14 +187,25 @@ function applyLanguage(language, { persist = true, updateUrl = true } = {}) {
   detailActions?.setAttribute('aria-label', copy.detailActions);
   rabbitThreshold?.setAttribute('aria-label', copy.rabbitThreshold);
   setMetaContent('meta[name="description"]', copy.metaDescription);
+  document.title = copy.metaTitle;
+  setMetaContent('meta[property="og:title"]', copy.metaTitle);
   setMetaContent('meta[property="og:description"]', copy.metaTagline);
+  setMetaContent('meta[name="twitter:title"]', copy.metaTitle);
   setMetaContent('meta[name="twitter:description"]', copy.metaTagline);
   setMetaContent('meta[property="og:locale"]', copy.locale);
   if (structuredData) {
     try {
       const data = JSON.parse(structuredData.textContent);
-      data.description = copy.aboutAlbum;
-      data.abstract = copy.metaTagline;
+      const entities = Array.isArray(data['@graph']) ? data['@graph'] : [data];
+      const album = entities.find(entity => entity['@type'] === 'MusicAlbum');
+      const page = entities.find(entity => entity['@type'] === 'WebPage');
+      const site = entities.find(entity => entity['@type'] === 'WebSite');
+      if (album) {
+        album.description = copy.aboutAlbum;
+        album.abstract = copy.metaTagline;
+      }
+      if (page) page.name = copy.metaTitle;
+      if (site) site.description = copy.metaDescription;
       structuredData.textContent = JSON.stringify(data);
     } catch { /* keep the server-rendered Russian metadata */ }
   }
@@ -413,6 +425,115 @@ room.classList.add('pano-active');
 syncPersistentWorld();
 registerLocation('foyer');
 panorama.setActive(true, 'foyer');
+
+async function renderCaptureReel() {
+  const fps = 30;
+  const frameCount = 540;
+  const scenes = [
+    { start: 0, end: 3, view: 'roof', yaw: [1.35, 1.9], pitch: [-.08, -.15], cycle: 0, returnCount: 0 },
+    { start: 4, end: 6.5, view: 'attic', yaw: [4.28, 4.8], pitch: [-.05, -.1], cycle: 0, returnCount: 0 },
+    { start: 7.5, end: 10, view: 'stairwell', yaw: [2.88, 3.62], pitch: [-.07, -.12], cycle: 0, returnCount: 0 },
+    { start: 11, end: 14, view: 'courtyard', yaw: [4.25, 5.08], pitch: [-.12, -.05], cycle: 2, returnCount: 2 },
+    { start: 15, end: 18, view: 'tramstop', yaw: [5.64, 6.2], pitch: [-.045, -.11], cycle: 2, returnCount: 2 },
+  ];
+  const travels = [
+    { start: 3, end: 4, to: 'attic', yaw: 4.28, pitch: -.05, cycle: 0, returnCount: 0 },
+    { start: 6.5, end: 7.5, to: 'stairwell', yaw: 2.88, pitch: -.07, cycle: 0, returnCount: 0 },
+    { start: 10, end: 11, to: 'courtyard', yaw: 4.25, pitch: -.12, cycle: 2, returnCount: 2 },
+    { start: 14, end: 15, to: 'tramstop', yaw: 5.64, pitch: -.045, cycle: 2, returnCount: 2 },
+  ];
+  const mix = (from, to, amount) => from + (to - from) * amount;
+  const ease = value => value * value * (3 - 2 * value);
+  const captureCanvas = document.createElement('canvas');
+  const captureContext = captureCanvas.getContext('2d');
+  let activeView = '';
+  let preparedTravel = '';
+  let activeState = '';
+
+  const setCaptureState = ({ cycle = 0, returnCount = 0 } = {}) => {
+    const state = `${cycle}:${returnCount}`;
+    panoramaRoot.dataset.variant = String(cycle);
+    panoramaRoot.dataset.cycle = String(cycle);
+    panoramaRoot.dataset.returnCount = String(returnCount);
+    room.dataset.variant = String(cycle);
+    room.dataset.returnCount = String(returnCount);
+    return state;
+  };
+  const capturePlayerFrame = async frameTime => {
+    const playerCanvas = panoramaRoot.querySelector('canvas');
+    if (!playerCanvas || !captureContext) return null;
+    if (captureCanvas.width !== playerCanvas.width || captureCanvas.height !== playerCanvas.height) {
+      captureCanvas.width = playerCanvas.width;
+      captureCanvas.height = playerCanvas.height;
+    }
+    captureEnvironmentFrame(frameTime);
+    captureContext.globalCompositeOperation = 'source-over';
+    captureContext.globalAlpha = 1;
+    captureContext.clearRect(0, 0, captureCanvas.width, captureCanvas.height);
+    captureContext.drawImage(playerCanvas, 0, 0, captureCanvas.width, captureCanvas.height);
+    captureContext.globalCompositeOperation = 'screen';
+    captureContext.globalAlpha = .54;
+    captureContext.drawImage(atmosphereCanvas, 0, 0, captureCanvas.width, captureCanvas.height);
+    captureContext.globalCompositeOperation = 'source-over';
+    captureContext.globalAlpha = .72;
+    captureContext.drawImage(snowCanvas, 0, 0, captureCanvas.width, captureCanvas.height);
+    captureContext.globalAlpha = 1;
+    return new Promise(resolve => captureCanvas.toBlob(resolve, 'image/png'));
+  };
+
+  room.classList.remove('booting', 'awakening');
+  room.classList.add('entered', 'pano-active', 'capture-reel');
+  entryScreen?.setAttribute('aria-hidden', 'true');
+  panorama.setActive(true);
+
+  for (let frame = 0; frame < frameCount; frame += 1) {
+    const time = frame / fps;
+    const frameTime = 1000 + time * 1000;
+    const scene = scenes.find(item => time >= item.start && time < item.end);
+    const travel = travels.find(item => time >= item.start && time < item.end);
+    if (scene) {
+      const state = setCaptureState(scene);
+      if (activeView !== scene.view || activeState !== state) {
+        await panorama.captureSetScene(scene.view, frameTime);
+        activeView = scene.view;
+        activeState = state;
+      }
+      const progress = ease((time - scene.start) / (scene.end - scene.start));
+      panorama.captureSetPose({
+        nextYaw: mix(scene.yaw[0], scene.yaw[1], progress),
+        nextPitch: mix(scene.pitch[0], scene.pitch[1], progress),
+        frameTime,
+      });
+    } else if (travel) {
+      const state = setCaptureState(travel);
+      if (preparedTravel !== travel.to) {
+        await panorama.captureStartTravel(travel.to, {
+          nextYaw: travel.yaw,
+          nextPitch: travel.pitch,
+        });
+        preparedTravel = travel.to;
+        activeState = state;
+      }
+      const progress = (time - travel.start) / (travel.end - travel.start);
+      panorama.captureTravelFrame(progress, frameTime);
+      if (progress >= .999) {
+        activeView = travel.to;
+        preparedTravel = '';
+      }
+    }
+    const image = await capturePlayerFrame(frameTime);
+    if (!image) throw new Error(`Could not capture player frame ${frame}.`);
+    const response = await fetch(`/teaser-frame?index=${frame}`, { method: 'POST', body: image });
+    if (!response.ok) throw new Error(`Could not save player frame ${frame}.`);
+  }
+  await fetch('/teaser-frames-complete', { method: 'POST' });
+}
+
+if (captureReel) {
+  window.setTimeout(() => {
+    renderCaptureReel().catch(error => console.error(error));
+  }, 0);
+}
 languageButtons.forEach(button => button.addEventListener('click', event => {
   event.stopPropagation();
   applyLanguage(button.dataset.language);
@@ -1622,7 +1743,7 @@ function paintSoft(context, x, y, radius, red, green, blue, alpha) {
   context.fill();
 }
 
-function renderAtmosphere(time) {
+function paintAtmosphere(time) {
   if (!atmosphereContext) return;
   atmosphereContext.clearRect(0, 0, innerWidth, innerHeight);
   const location = panoramaRoot?.dataset.location || 'foyer';
@@ -1659,6 +1780,10 @@ function renderAtmosphere(time) {
       paintSoft(atmosphereContext, innerWidth * (.63 + Math.sin(time * .0004 + index) * .025), innerHeight * (.5 - rise * .24), 7 + rise * 13, 216, 218, 210, .018 * (1 - rise));
     }
   }
+}
+
+function renderAtmosphere(time) {
+  paintAtmosphere(time);
   requestAnimationFrame(renderAtmosphere);
 }
 
@@ -1672,7 +1797,7 @@ function snowRect() {
   return { left: zone.left, top: zone.top, width: zone.width, height: zone.height * .67 };
 }
 
-function renderSnow(time) {
+function paintSnow(time) {
   if (!snowContext) return;
   snowContext.clearRect(0, 0, innerWidth, innerHeight);
   const rect = snowRect();
@@ -1699,12 +1824,23 @@ function renderSnow(time) {
     }
     snowContext.restore();
   }
+}
+
+function renderSnow(time) {
+  paintSnow(time);
   requestAnimationFrame(renderSnow);
+}
+
+function captureEnvironmentFrame(time) {
+  paintAtmosphere(time);
+  paintSnow(time);
 }
 
 resizeSnow();
 resizeAtmosphere();
 addEventListener('resize', resizeSnow);
 addEventListener('resize', resizeAtmosphere);
-requestAnimationFrame(renderSnow);
-requestAnimationFrame(renderAtmosphere);
+if (!captureReel) {
+  requestAnimationFrame(renderSnow);
+  requestAnimationFrame(renderAtmosphere);
+}

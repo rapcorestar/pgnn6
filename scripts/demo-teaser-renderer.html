@@ -1,0 +1,158 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>PGNN Six — Instagram Reel</title>
+<style>
+  html, body { margin: 0; min-height: 100%; background: #050506; }
+  canvas { display: block; width: 100vw; height: auto; }
+</style>
+<canvas width="1080" height="1920"></canvas>
+<script>
+  const canvas = document.querySelector('canvas');
+  const context = canvas.getContext('2d', { alpha: false });
+  const WIDTH = canvas.width;
+  const HEIGHT = canvas.height;
+  const FPS = 30;
+  const TOTAL_FRAMES = 450;
+  const images = new Map();
+  const ease = value => value * value * (3 - 2 * value);
+  const clamp = value => Math.max(0, Math.min(1, value));
+  const mix = (from, to, amount) => from + (to - from) * amount;
+  const shots = [
+    { start: .75, end: 3.35, source: '../assets/pgnn-six/detail-desk-matched.png', focus: [[.43, .49], [.47, .46]], zoom: [1.0, 1.1], cue: { start: 1.28, x: .48, y: .39, label: 'коснуться страницы' } },
+    { start: 2.95, end: 6.05, source: '../assets/pgnn-six/detail-kitchen-matched.png', focus: [[.56, .49], [.63, .46]], zoom: [1.0, 1.16], cue: { start: 4.0, x: .65, y: .37, label: 'нажать клавишу' } },
+    { start: 5.68, end: 8.82, source: '../assets/pgnn-six/detail-elevator-matched.png', focus: [[.55, .50], [.51, .44]], zoom: [1.0, 1.12], cue: { start: 6.88, x: .51, y: .40, label: 'нажать кнопку' } },
+    { start: 8.45, end: 11.9, source: '../assets/pgnn-six/detail-attic-matched.png', focus: [[.52, .53], [.48, .49]], zoom: [1.0, 1.1], cue: { start: 9.85, x: .52, y: .62, label: 'идти глубже' } },
+    { start: 11.55, end: 15, source: '../assets/pgnn-six/detail-basement-matched.png', focus: [[.49, .48], [.56, .46]], zoom: [1.03, 1.13], cue: { start: 12.9, x: .53, y: .47, label: 'слушать трубы' } },
+  ];
+  const wordmarkSource = '../assets/pgnn-six/six-wordmark.png';
+
+  function loadImage(source) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = source;
+    });
+  }
+
+  function drawShot(shot, time, alpha = 1) {
+    const image = images.get(shot.source);
+    if (!image) return;
+    const progress = ease(clamp((time - shot.start) / (shot.end - shot.start)));
+    const focusX = mix(shot.focus[0][0], shot.focus[1][0], progress);
+    const focusY = mix(shot.focus[0][1], shot.focus[1][1], progress);
+    const zoom = mix(shot.zoom[0], shot.zoom[1], progress);
+    const scale = Math.max(WIDTH / image.width, HEIGHT / image.height) * zoom;
+    const cropWidth = WIDTH / scale;
+    const cropHeight = HEIGHT / scale;
+    const sourceX = clamp(focusX) * (image.width - cropWidth);
+    const sourceY = clamp(focusY) * (image.height - cropHeight);
+    context.save();
+    context.globalAlpha = alpha;
+    context.drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, WIDTH, HEIGHT);
+    context.restore();
+  }
+
+  function drawPlayerChrome(time, shot) {
+    const shade = context.createLinearGradient(0, 0, 0, HEIGHT);
+    shade.addColorStop(0, 'rgba(0, 0, 0, .44)');
+    shade.addColorStop(.14, 'rgba(0, 0, 0, 0)');
+    shade.addColorStop(.78, 'rgba(0, 0, 0, 0)');
+    shade.addColorStop(1, 'rgba(0, 0, 0, .64)');
+    context.fillStyle = shade;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    context.fillStyle = 'rgba(247, 187, 0, .8)';
+    context.font = '700 21px "PT Mono", ui-monospace, monospace';
+    context.letterSpacing = '3px';
+    context.fillText('RU', WIDTH - 168, 76);
+    context.fillStyle = 'rgba(247, 187, 0, .28)';
+    context.fillText('EN', WIDTH - 108, 76);
+    context.fillText('FR', WIDTH - 48, 76);
+    context.fillStyle = '#f7bb00';
+    context.fillRect(WIDTH - 169, 86, 30, 2);
+    if (shot?.cue) drawCue(shot.cue, time);
+  }
+
+  function drawCue(cue, time) {
+    const progress = clamp((time - cue.start) / .3);
+    const fade = Math.min(1, progress * 3, Math.max(0, cue.start + 1.25 - time) * 2.8);
+    if (fade <= 0) return;
+    const x = cue.x * WIDTH;
+    const y = cue.y * HEIGHT;
+    context.save();
+    context.globalAlpha = fade;
+    context.strokeStyle = '#f7bb00';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(x, y, 18 + Math.sin(progress * Math.PI) * 7, 0, Math.PI * 2);
+    context.stroke();
+    context.fillStyle = 'rgba(5, 5, 4, .76)';
+    context.fillRect(x + 26, y + 26, 310, 52);
+    context.fillStyle = '#f7bb00';
+    context.font = '700 18px "PT Mono", ui-monospace, monospace';
+    context.letterSpacing = '1.7px';
+    context.fillText(cue.label, x + 44, y + 59);
+    context.restore();
+  }
+
+  function drawOpening(time) {
+    const wordmark = images.get(wordmarkSource);
+    if (!wordmark) return;
+    const alpha = clamp((.68 - time) / .3);
+    if (alpha <= 0) return;
+    context.save();
+    context.fillStyle = 'rgba(1, 1, 1, .88)';
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    const width = 850;
+    const height = width * wordmark.height / wordmark.width;
+    context.globalAlpha = alpha;
+    context.drawImage(wordmark, (WIDTH - width) / 2, (HEIGHT - height) / 2 - 26, width, height);
+    context.restore();
+  }
+
+  function drawEnding(time) {
+    const alpha = clamp((time - 14.25) / .55);
+    if (!alpha) return;
+    context.save();
+    context.globalAlpha = alpha;
+    context.fillStyle = 'rgba(247, 187, 0, .88)';
+    context.font = '700 18px "PT Mono", ui-monospace, monospace';
+    context.letterSpacing = '3.5px';
+    const label = 'pgnn — six';
+    context.fillText(label, (WIDTH - context.measureText(label).width) / 2, HEIGHT - 106);
+    context.restore();
+  }
+
+  function render(time) {
+    context.fillStyle = '#050506';
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    const current = shots.find(shot => time >= shot.start && time < shot.end) || shots[0];
+    const previous = shots[shots.indexOf(current) - 1];
+    if (previous && time < current.start + .42) {
+      drawShot(previous, previous.end - .01);
+      drawShot(current, time, ease((time - current.start) / .42));
+    } else drawShot(current, time);
+    drawPlayerChrome(time, current);
+    drawOpening(time);
+    drawEnding(time);
+  }
+
+  async function begin() {
+    const sources = [...new Set([...shots.map(shot => shot.source), wordmarkSource])];
+    const loaded = await Promise.all(sources.map(async source => [source, await loadImage(source)]));
+    loaded.forEach(([source, image]) => images.set(source, image));
+    const query = new URLSearchParams(location.search);
+    if (query.get('frames') === '1') {
+      for (let frame = 0; frame < TOTAL_FRAMES; frame += 1) {
+        render(frame / FPS);
+        const image = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        await fetch(`/teaser-frame?index=${frame}`, { method: 'POST', body: image });
+      }
+      await fetch('/teaser-frames-complete', { method: 'POST' });
+      return;
+    }
+    render(Number(query.get('preview') || 5));
+  }
+
+  begin().catch(error => console.error(error));
+</script>

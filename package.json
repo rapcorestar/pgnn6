@@ -11,6 +11,8 @@
     "dev": "vite",
     "check": "node --check room.js && node --check panorama.js && node --check i18n.js",
     "build": "npm run check && vite build",
+    "render:ambient": "node scripts/render-ambient-loops.mjs",
+    "render:demo": "node scripts/render-demo-teaser.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

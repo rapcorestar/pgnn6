@@ -222,9 +222,15 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
 
   const scene = new THREE.Scene();
   const MAX_FOV = 88;
+  const captureMode = new URLSearchParams(location.search).get('capture') === 'reel';
   const camera = new THREE.PerspectiveCamera(MAX_FOV, 1, .1, 100);
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    powerPreference: 'low-power',
+    preserveDrawingBuffer: captureMode,
+  });
+  renderer.setPixelRatio(captureMode ? .5 : Math.min(devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0x000000, 0);
   root.append(renderer.domElement);
@@ -526,6 +532,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
   let ambientFrame = 0;
   let reactionFrame = 0;
   let lastAmbientRender = 0;
+  let captureTravel = null;
   const entryYaw = view => ({
     foyer: 2.82,
     kitchen: .18,
@@ -562,7 +569,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
   function render(frameTime) {
     // The room is never perfectly still: a nearly imperceptible hand-held breath
     // keeps the viewer present without hijacking their control of the camera.
-    const now = frameTime || performance.now();
+    const now = Number.isFinite(frameTime) ? frameTime : performance.now();
     const elapsed = Math.min(64, Math.max(0, now - lastMotionFrame));
     lastMotionFrame = now;
     if (!dragging && lookMotion > .0005) lookMotion *= Math.exp(-elapsed / 85);
@@ -607,6 +614,114 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
       textureCache.set(source, texture);
       done(texture);
     });
+  }
+
+  function sourceFor(view) {
+    const next = PANORAMAS[view];
+    const variants = Array.isArray(next.src) ? next.src : [next.src];
+    const loop = Math.max(0, Number(root.dataset.loop) || 0);
+    const variant = Math.max(0, Number(root.dataset.variant) || 0);
+    return variants[Math.max(loop, variant) % variants.length];
+  }
+
+  function applyCaptureScene(view, texture, frameTime) {
+    const next = PANORAMAS[view];
+    sphere.material.uniforms.uMap.value = texture;
+    sphere.material.uniforms.uFlipX.value = next.flipX ? 1 : 0;
+    sphere.material.uniforms.uPlace.value = placeCode(view);
+    sphere.material.uniforms.uCycle.value = Math.max(0, Number(root.dataset.cycle) || 0) % 4;
+    sphere.material.uniforms.uReturn.value = Math.max(0, Number(root.dataset.returnCount) || 0);
+    incoming.visible = false;
+    incoming.material.uniforms.uOpacity.value = 0;
+    currentKey = view;
+    root.dataset.location = view;
+    delete root.dataset.destination;
+    root.classList.remove('travelling');
+    yaw = entryYaw(view);
+    pitch = entryPitch(view);
+    travelRoll = 0;
+    travelMotion = 0;
+    camera.position.set(0, 0, 0);
+    camera.fov = MAX_FOV;
+    camera.updateProjectionMatrix();
+    render(frameTime);
+  }
+
+  function captureSetScene(view, frameTime) {
+    if (!PANORAMAS[view]) return Promise.reject(new Error(`Unknown panorama: ${view}`));
+    return new Promise(resolve => {
+      loadTexture(sourceFor(view), texture => {
+        applyCaptureScene(view, texture, frameTime);
+        resolve();
+      });
+    });
+  }
+
+  function captureStartTravel(view, { nextYaw, nextPitch } = {}) {
+    if (!PANORAMAS[view]) return Promise.reject(new Error(`Unknown panorama: ${view}`));
+    return new Promise(resolve => {
+      loadTexture(sourceFor(view), texture => {
+        const next = PANORAMAS[view];
+        incoming.material.uniforms.uMap.value = texture;
+        incoming.material.uniforms.uFlipX.value = next.flipX ? 1 : 0;
+        incoming.material.uniforms.uPlace.value = placeCode(view);
+        incoming.material.uniforms.uCycle.value = Math.max(0, Number(root.dataset.cycle) || 0) % 4;
+        incoming.material.uniforms.uReturn.value = Math.max(0, Number(root.dataset.returnCount) || 0);
+        incoming.material.uniforms.uOpacity.value = 0;
+        incoming.visible = true;
+        captureTravel = {
+          view,
+          texture,
+          startYaw: yaw,
+          startPitch: pitch,
+          targetYaw: Number.isFinite(nextYaw) ? nextYaw : entryYaw(view),
+          targetPitch: Number.isFinite(nextPitch) ? nextPitch : entryPitch(view),
+        };
+        root.classList.add('travelling');
+        resolve();
+      });
+    });
+  }
+
+  function captureTravelFrame(progress, frameTime) {
+    if (!captureTravel) return;
+    const state = captureTravel;
+    const amount = Math.max(0, Math.min(1, progress));
+    const smooth = value => value * value * (3 - 2 * value);
+    const textureMix = smooth(Math.max(0, Math.min(1, (amount - .31) / .43)));
+    const travelEnvelope = Math.sin(amount * Math.PI);
+    const stride = Math.sin(amount * Math.PI * 6);
+    const turn = smooth(Math.max(0, Math.min(1, (amount - .47) / .53)));
+    const angleDelta = Math.atan2(Math.sin(state.targetYaw - state.startYaw), Math.cos(state.targetYaw - state.startYaw));
+    const forward = travelEnvelope * 2.35;
+    yaw = state.startYaw + angleDelta * turn;
+    pitch = state.startPitch + (state.targetPitch - state.startPitch) * turn + Math.abs(stride) * .006 * travelEnvelope;
+    travelRoll = stride * .0075 * travelEnvelope;
+    camera.position.set(-Math.sin(yaw) * forward, Math.abs(stride) * .085 * travelEnvelope, -Math.cos(yaw) * forward);
+    const fovProgress = amount < .5 ? smooth(amount / .5) : smooth((amount - .5) / .5);
+    camera.fov = amount < .5 ? MAX_FOV + (46 - MAX_FOV) * fovProgress : 46 + (MAX_FOV - 46) * fovProgress;
+    camera.updateProjectionMatrix();
+    travelMotion = Math.pow(travelEnvelope, .78);
+    incoming.material.uniforms.uOpacity.value = textureMix;
+    render(frameTime);
+    if (amount < 1) return;
+    applyCaptureScene(state.view, state.texture, frameTime);
+    captureTravel = null;
+  }
+
+  function captureSetPose({ nextYaw, nextPitch, fov = MAX_FOV, frameTime } = {}) {
+    if (Number.isFinite(nextYaw)) yaw = nextYaw;
+    if (Number.isFinite(nextPitch)) pitch = nextPitch;
+    travelRoll = 0;
+    travelMotion = 0;
+    camera.position.set(0, 0, 0);
+    camera.fov = fov;
+    camera.updateProjectionMatrix();
+    render(frameTime);
+  }
+
+  function captureFrame() {
+    return new Promise(resolve => renderer.domElement.toBlob(resolve, 'image/png'));
   }
 
   function tweenFov(to, duration) {
@@ -892,7 +1007,7 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
     }
     ambientFrame = requestAnimationFrame(ambient);
   };
-  ambientFrame = requestAnimationFrame(ambient);
+  if (!captureMode) ambientFrame = requestAnimationFrame(ambient);
 
   return {
     setActive(nextActive, view, passage) {
@@ -928,6 +1043,11 @@ export function createPanorama(root, onPortal, onGesture, onHover) {
       };
       reactionFrame = requestAnimationFrame(frame);
     },
+    captureSetScene,
+    captureStartTravel,
+    captureTravelFrame,
+    captureSetPose,
+    captureFrame,
     hasView(view) { return Boolean(PANORAMAS[view]); },
     resize,
   };
